@@ -1,0 +1,37 @@
+
+-> = method
+: = argument
+. = functionality
+
+in js
+ -> initialize a token program using the wrapped solana key (native mint)
+ -> create an account with wrapped solana for holding fees for the match
+ -> create a public key for escrow program
+
+in rust
+  escrow contract
+    -> init contract
+        : takes in the account for fees to be deposited to
+        : the token program for wrapped solana (so that we can create program derived accounts for
+           new user's joining the game)
+        : the minimum amount of SOL needed to join the game
+    -> add user to match
+        : takes in user public key
+        : takes in user bid amount
+        . checks that bid amount > minimum bid amount
+        . creates program derived account using native mint program ID & user public key for wrapped solana
+        . transfers the funds from the user's account into the native mint PDA account
+    -> game is completed
+        : takes in a winning user's public key
+        : takes in all users in the match's public keys
+        . if there is no winning user, return funds from each PDA derived from their public key's back to each user
+           minus the fee for playing the game
+        . if there is a winner, transfer funds to the winning player's account from all PDAs
+
+
+
+
+
+
+
+
