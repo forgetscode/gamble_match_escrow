@@ -1,6 +1,6 @@
-const assert = require('assert');
-const anchor = require('@project-serum/anchor');
-const { SystemProgram } = anchor.web3;
+const anchor = require("@project-serum/anchor");
+const { TOKEN_PROGRAM_ID, Token } = require("@solana/spl-token");
+const assert = require("assert");
 
 
 
@@ -21,15 +21,16 @@ describe('gamble_match_escrow', () => {
     // Add your test here.
     const tx = await program.rpc.initializeEscrow( {
       accounts:{
-        escrow_account: testaccount.publicKey,
+        escrowAccount: testaccount.publicKey,
         user: provider.wallet.publicKey,
         systemProgram: SystemProgram.programId,
       },
       signers: [testaccount],
     });
 
-    let escrow_account = await program.account.testaccount.fetch(testaccount.publicKey)
 
+    let escrow_account = await program.account.matchAccount.fetch(testaccount.publicKey);
+    
     assert.ok(escrow_account);
     console.log("Your transaction signature", tx);
   });
