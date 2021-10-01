@@ -17,7 +17,8 @@ pub mod gamble_match_escrow {
     
     pub fn initialize_escrow(ctx: Context<InitializeEscrow>, initializer_amount: u64) -> ProgramResult {
         let match_account = &mut ctx.accounts.escrow_account;
-        match_account.user_data = [];
+        match_account.game_state = false;
+        match_account.user_data = [(Pubkey::new_unique(), 0);8];
         
         let (vault_authority, _vault_authority_bump) =
             Pubkey::find_program_address(&[b"authority-seed"], ctx.program_id);
@@ -46,7 +47,7 @@ pub struct InitializeEscrow<'info> {
     #[account(mut)]
     pub initializer_deposit_token_account:Account<'info, TokenAccount>,
 
-    #[account(init, payer = initializer, space = 100)]
+    #[account(init, payer = initializer, space = 1 + 00)]
     pub escrow_account: Account<'info, MatchAccount>,
 
     #[account(
@@ -70,8 +71,11 @@ pub struct UserItem {
 
 #[account]
 pub struct MatchAccount {
-    pub user_data:[Pubkey; 0]
+    pub game_state: bool,
+    pub user_data:[(Pubkey, u8);8]
 }
+
+
 
 impl<'info> InitializeEscrow<'info> {
     fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
