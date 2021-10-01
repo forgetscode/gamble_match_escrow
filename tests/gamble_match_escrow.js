@@ -61,14 +61,14 @@ describe('Initialize PDA token account', () => {
 
   it('Initialized!', async () => {
 
-    const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
-      program.programId
-    );
+    // const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
+    //   [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
+    //   program.programId
+    // );
 
     const tx = await program.rpc.initializeEscrow(new anchor.BN(123),{
       accounts:{
-        initializer: provider.wallet.publicKey,
+        userAsAuthority: provider.wallet.publicKey,
         mint: mintA.publicKey,
         initializerDepositTokenAccount: TokenAccountA,
         escrowAccount: testaccount.publicKey, 
@@ -79,12 +79,46 @@ describe('Initialize PDA token account', () => {
       },
       signers: [testaccount, provider.wallet.payer],
     });
+    console.log({ testaccount: testaccount.publicKey.toString(), provider_key: provider.wallet.payer.publicKey.toString() })
 
     let _TokenAccountPDA = await mintA.getAccountInfo(provider.wallet.publicKey);
     let _TokenAccountA = await mintA.getAccountInfo(TokenAccountA);
 
 
     assert.ok(_TokenAccountPDA.amount.toNumber() + _TokenAccountA.amount.toNumber() == initializerAmount);
+    /*
+    let escrow_account = await program.account.matchAccount.fetch(testaccount.publicKey);
+    assert.ok(escrow_account);
+    */
+    console.log("Your transaction signature", tx);
+  });
+
+  it('Added user!', async () => {
+
+    const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
+        [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
+        program.programId
+    );
+    console.log({_pda, _nonce}); // not really sure what i'm doing here but it's 5am and i'm tired yolo
+    const tx = await program.rpc.addUser(new anchor.BN(123),{
+      accounts:{
+        userAsAuthority: provider.wallet.publicKey,
+        mint: mintA.publicKey,
+        depositTokenAccount: TokenAccountA,
+        escrowAccount: testaccount.publicKey,
+        vaultAccount: provider.wallet.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+      },
+      signers: [_pda, provider.wallet.payer],
+    });
+
+    // let _TokenAccountPDA = await mintA.getAccountInfo(provider.wallet.publicKey);
+    // let _TokenAccountA = await mintA.getAccountInfo(TokenAccountA);
+    //
+    //
+    // assert.ok(_TokenAccountPDA.amount.toNumber() + _TokenAccountA.amount.toNumber() == initializerAmount);
     /*
     let escrow_account = await program.account.matchAccount.fetch(testaccount.publicKey);
     assert.ok(escrow_account);
