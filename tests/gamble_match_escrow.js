@@ -24,6 +24,7 @@ let pda = null;
 
 
 const testaccount = anchor.web3.Keypair.generate()
+const testtokenaccount = anchor.web3.Keypair.generate()
 
 it('test mint', async () => {
   await provider.connection.confirmTransaction(
@@ -72,17 +73,22 @@ describe('gamble_match_escrow', () => {
       [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
       program.programId
     );
-    
+
+    /*
     let TokenAccountPDA = await mintA.createAccount(_pda);
     let _TokenAccountPDA = await mintA.getAccountInfo(TokenAccountPDA);
+    */
 
-    const tx = await program.rpc.initializeEscrow({
+    let _TokenAccountA = await mintA.getAccountInfo(TokenAccountA)
+
+
+    const tx = await program.rpc.initializeEscrow(new anchor.BN(123),{
       accounts:{
         initializer: provider.wallet.publicKey,
         mint: mintA.publicKey,
         initializerDepositTokenAccount: TokenAccountA,
-        escrowAccount: testaccount.publicKey,
-        vaultAccount: TokenAccountPDA,
+        escrowAccount: testaccount.publicKey, 
+        vaultAccount: provider.wallet.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
@@ -92,8 +98,14 @@ describe('gamble_match_escrow', () => {
 
     
     let escrow_account = await program.account.matchAccount.fetch(testaccount.publicKey);
-    
+
+    let _TokenAccountA2 = await mintA.getAccountInfo(_pda)
+    console.log(_TokenAccountA2);
+
     assert.ok(escrow_account);
+
+    //let vault_account = await program.account.matchAccount.fetch(testaccount.publicKey);
+
     console.log("Your transaction signature", tx);
   });
 });
