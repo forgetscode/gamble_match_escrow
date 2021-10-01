@@ -51,9 +51,11 @@ it('test mint', async () => {
     initializerAmount
   );
 
-  let _TokenAccountA = await mintA.getAccountInfo(TokenAccountA);
   
+
+  let _TokenAccountA = await mintA.getAccountInfo(TokenAccountA);
   assert.ok(_TokenAccountA.amount.toNumber() == initializerAmount);
+
 });
 
 
@@ -67,29 +69,28 @@ describe('gamble_match_escrow', () => {
     //create Token account for mint A
 
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("gamble_match_escrow"))],
+      [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
       program.programId
     );
     
-    TokenAccountPDA = await mintA.createAccount(_pda);
+    let TokenAccountPDA = await mintA.createAccount(_pda);
     let _TokenAccountPDA = await mintA.getAccountInfo(TokenAccountPDA);
 
-    
-
-    const tx = await program.rpc.initializeEscrow( {
+    const tx = await program.rpc.initializeEscrow({
       accounts:{
         initializer: provider.wallet.publicKey,
         mint: mintA.publicKey,
-        initializerDepositTokenAccount: TokenAccountA.publicKey,
+        initializerDepositTokenAccount: TokenAccountA,
         escrowAccount: testaccount.publicKey,
-        vaultAccount: TokenAccountPDA.publicKey,
+        vaultAccount: TokenAccountPDA,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
-      signers: [testaccount, provider.wallet.publicKey],
+      signers: [testaccount, provider.wallet.payer],
     });
 
+    
     let escrow_account = await program.account.matchAccount.fetch(testaccount.publicKey);
     
     assert.ok(escrow_account);
