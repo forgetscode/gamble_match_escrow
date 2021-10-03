@@ -2,6 +2,7 @@ const anchor = require("@project-serum/anchor");
 const { TOKEN_PROGRAM_ID, Token } = require("@solana/spl-token");
 const assert = require("assert");
 const { Console } = require("console");
+const process = require("process");
 
 
 
@@ -24,7 +25,7 @@ const payer = anchor.web3.Keypair.generate();
 let pda = null;
 
 const testaccount = anchor.web3.Keypair.generate()
-
+console.log(`\n\nANCHOR WALLET: ${process.env.ANCHOR_WALLET}`);
 it('test mint', async () => {
   await provider.connection.confirmTransaction(
     await provider.connection.requestAirdrop(payer.publicKey, 10000000000),
@@ -99,11 +100,11 @@ describe('Initialize PDA token account', () => {
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
         program.programId
     );
-    console.log({_pda, _nonce}); // not really sure what i'm doing here but it's 5am and i'm tired yolo
+    // console.log({_pda, _nonce}); // not really sure what i'm doing here but it's 5am and i'm tired yolo
     const tx = await program.rpc.addUser(new anchor.BN(123),{
       accounts:{
         userAsAuthority: provider.wallet.publicKey,
-        mint: mintA.publicKey,
+        // mint: mintA.publicKey,
         depositTokenAccount: TokenAccountA,
         escrowAccount: testaccount.publicKey,
         vaultAccount: provider.wallet.publicKey,
@@ -111,7 +112,7 @@ describe('Initialize PDA token account', () => {
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       },
-      signers: [_pda, provider.wallet.payer],
+      signers: [provider.wallet.payer],
     });
 
     // let _TokenAccountPDA = await mintA.getAccountInfo(provider.wallet.publicKey);

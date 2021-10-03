@@ -3,17 +3,19 @@ use anchor_lang::prelude::borsh::BorshDeserialize;
 use anchor_spl::token::{self, SetAuthority, TokenAccount, Transfer, Mint};
 use spl_token::instruction::AuthorityType;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("AVjAc7YszkPzzyNCJ9rNM1Vh9Ve2HpWJUbi6mztCZi6D");
 
 #[program]
 pub mod gamble_match_escrow {
     use super::*;
-    
+
+    const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
+
     pub fn initialize_escrow(ctx: Context<InitializeEscrow>, initializer_amount: u64) -> ProgramResult {
-        &mut ctx.accounts.escrow_account.load();
+        ctx.accounts.match_account.load();
 
         let (vault_authority, _vault_authority_bump) =
-            Pubkey::find_program_address(&[b"authority-seed"], ctx.program_id);
+            Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
 
         token::set_authority(
             ctx.accounts.into_set_authority_context(),
@@ -22,23 +24,26 @@ pub mod gamble_match_escrow {
         )?;
 
         token::transfer(
-            ctx.accounts.into_transfer_to_pda_context(),
+            ctx.accounts
+                .into_transfer_to_pda_context(),
             initializer_amount,
         )?;
-
+        ctx.accounts.match_account.add_user_to_match(ctx.accounts.user_account.key(), initializer_amount);
         Ok(())
     }
-    // not really sure what i'm doing here but it's 5am and i'm tired yolo
     pub fn add_user(ctx: Context<AddUser>, amount: u64) -> ProgramResult {
-        // let (vault_authority, _vault_authority_bump) =
-        //     Pubkey::find_program_address(&[b"authority-seed"], ctx.program_id);
-        // token::set_authority(
-        //     ctx.accounts.into_set_authority_context(),
-        //     AuthorityType::AccountOwner,
-        //     Some(vault_authority),
-        // )?;
+        let (_pda, _) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
+        let (vault_authority, _vault_authority_bump) =
+            Pubkey::find_program_address(&[b"authority-seed"], ctx.program_id);
+        ctx.accounts.match_account.add_user_to_match(ctx.accounts.user_account.key(), amount);
+        token::set_authority(
+            ctx.accounts.into_set_authority_context(),
+            AuthorityType::AccountOwner,
+            Some(vault_authority),
+        )?;
         token::transfer(
-            ctx.accounts.into_transfer_to_pda_context(),
+            ctx.accounts
+                .into_transfer_to_pda_context(),
             amount,
         )?;
         Ok(())
@@ -48,22 +53,23 @@ pub mod gamble_match_escrow {
 #[derive(Accounts)]
 pub struct InitializeEscrow<'info> {
     #[account(signer)]
-    pub user_as_authority: AccountInfo<'info>,  // used to be initializer
+    pub user_account: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub initializer_deposit_token_account: Account<'info, TokenAccount>,
 
-    #[account(init, payer = user_as_authority, space = 512)]
-    pub escrow_account: Account<'info, MatchAccount>,
+    #[account(init, payer = user_account, space = 512)]
+    pub match_account: Account<'info, MatchAccount>,
 
     #[account(
         init,
-        payer = user_as_authority,
+        payer = user_account,
         token::mint = mint,
-        token::authority = user_as_authority,
+        token::authority = user_account,
     )]
     pub vault_account: Account<'info, TokenAccount>,
+
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
     pub token_program: AccountInfo<'info>,
@@ -73,17 +79,14 @@ pub struct InitializeEscrow<'info> {
 pub struct AddUser<'info> {
 
     #[account(signer)]
-    pub user_as_authority: AccountInfo<'info>, // used to be initializer
-    pub mint: Account<'info, Mint>,
+    pub user_account: AccountInfo<'info>, // used to be initializer
+    // pub mint: Account<'info, Mint>,
 
     #[account(mut)]
     pub deposit_token_account: Account<'info, TokenAccount>,
 
-    #[account(
-    mut,
-    has_one = user_as_authority
-    )]
-    pub escrow_account: Account<'info, MatchAccount>,
+    #[account(mut)]
+    pub match_account: Account<'info, MatchAccount>,
 
     #[account(mut)]
     pub vault_account: Account<'info, TokenAccount>,
@@ -96,7 +99,7 @@ pub struct AddUser<'info> {
 pub struct MatchAccount {
     pub user_as_authority: Pubkey,
     pub game_state: bool,
-    pub user_balances: [u8; 8],
+    pub user_balances: [u64; 8],
     pub user_keys: [Pubkey; 8]
 }
 
@@ -107,7 +110,7 @@ impl MatchAccount {
     pub fn load(&mut self) {
         let rnd_key = MatchAccount::empty_key();
         self.game_state = false;
-        self.user_balances = [0_u8; 8];
+        self.user_balances = [0_u64; 8];
         self.user_keys = [rnd_key; 8];
     }
     fn look_for_empty_idx(&mut self) -> Option<usize> {
@@ -123,7 +126,7 @@ impl MatchAccount {
         }
         result
     }
-    pub fn add_user_to_match(&mut self, user_key: Pubkey, user_bal: u8) {
+    pub fn add_user_to_match(&mut self, user_key: Pubkey, user_bal: u64) {
         let empty_idx = self.look_for_empty_idx();
         if let Some(empty_idx) = empty_idx {
             self.user_keys[empty_idx] = user_key;
@@ -131,7 +134,7 @@ impl MatchAccount {
         }
     }
 }
-
+//
 impl<'info> InitializeEscrow<'info> {
     fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         let cpi_accounts = Transfer {
@@ -140,19 +143,53 @@ impl<'info> InitializeEscrow<'info> {
                 .to_account_info()
                 .clone(),
             to: self.vault_account.to_account_info().clone(),
-            authority: self.user_as_authority.clone(),
+            authority: self.user_account.clone(),
         };
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }
 
     fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
         let cpi_accounts = SetAuthority {
-            account_or_mint: self.vault_account.to_account_info().clone(),
-            current_authority: self.user_as_authority.clone(),
+            account_or_mint: self
+                .initializer_deposit_token_account
+                .to_account_info()
+                .clone(),
+            current_authority: self.user_account.clone(),
         };
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }
 }
+
+// impl<'info> From<&mut InitializeEscrow<'info>>
+//     for CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+//     fn from(accounts: &mut InitializeEscrow<'info>) -> Self {
+//         let cpi_accounts = Transfer {
+//             from: accounts
+//                 .initializer_deposit_token_account
+//                 .to_account_info()
+//                 .clone(),
+//             to: accounts.vault_account.to_account_info().clone(),
+//             authority: accounts.user_as_authority.clone(),
+//         };
+//         CpiContext::new(accounts.token_program.clone(), cpi_accounts)
+//     }
+// }
+//
+// impl<'info> From<&mut InitializeEscrow<'info>>
+//     for CpiContext<'_, '_, '_, 'info, SetAuthority<'info>>
+// {
+//     fn from(accounts: &mut InitializeEscrow<'info>) -> Self {
+//         let cpi_accounts = SetAuthority {
+//             account_or_mint: accounts
+//                 .initializer_deposit_token_account
+//                 .to_account_info()
+//                 .clone(),
+//             current_authority: accounts.initializer.clone(),
+//         };
+//         let cpi_program = accounts.token_program.clone();
+//         CpiContext::new(cpi_program, cpi_accounts)
+//     }
+// }
 
 impl<'info> AddUser<'info> {
     fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
@@ -162,14 +199,14 @@ impl<'info> AddUser<'info> {
                 .to_account_info()
                 .clone(),
             to: self.vault_account.to_account_info().clone(),
-            authority: self.user_as_authority.clone(),
+            authority: self.user_account.clone(),
         };
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }
     fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
         let cpi_accounts = SetAuthority {
             account_or_mint: self.vault_account.to_account_info().clone(),
-            current_authority: self.user_as_authority.clone(),
+            current_authority: self.user_account.clone(),
         };
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }

@@ -1,12 +1,12 @@
 [programs.localnet]
-gamble_match_escrow = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+gamble_match_escrow = "AVjAc7YszkPzzyNCJ9rNM1Vh9Ve2HpWJUbi6mztCZi6D"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
 cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+wallet = "~/.config/solana/id3.json"
 
 [scripts]
 test = "mocha -t 1000000 tests/"
