@@ -1,7 +1,7 @@
 import {Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
 import promise_then_catch from "promise-then-catch/lib";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Keypair } from "@solana/web3.js";
 import {load_program_from_idl} from "./utils/idl";
 
 
@@ -54,39 +54,70 @@ const init_contract = async (
     tokenAccount: PublicKey,
     mint: Token
 ) => {
-    const escrowAccount = anchor.web3.Keypair.generate();
+    const matchAccount = anchor.web3.Keypair.generate();
     const tx = await program.rpc.initializeEscrow(new anchor.BN(123),{
         accounts:{
-            initializer: provider.wallet.publicKey,
+            userAccount: provider.wallet.publicKey,
             mint: mint.publicKey,
             initializerDepositTokenAccount: tokenAccount,
-            escrowAccount: escrowAccount.publicKey,
+            matchAccount: matchAccount.publicKey,
             vaultAccount: provider.wallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
-        // instructions: [
-        //     await program.account.escrowAccount.createInstruction(escrowAccount)
-        // ],
-        signers: [escrowAccount],
+        signers: [matchAccount],
     });
-    console.log({ testaccount: escrowAccount.publicKey.toString(), provider_key: provider.wallet.payer.publicKey.toString() })
+    console.log({ testaccount: matchAccount.publicKey.toString(), provider_key: provider.wallet.payer.publicKey.toString() })
 
     let tokenAccountPda = await mint.getAccountInfo(provider.wallet.publicKey);
     let tokenAccountRefreshed = await mint.getAccountInfo(tokenAccount);
-
+    // program.account
+    // let matchAccount = await program.account
     console.log(`Did init contract work? ${(tokenAccountPda.amount.toNumber() + tokenAccountRefreshed.amount.toNumber() == initializerAmount) ? "YES" : "NO"}`);
     console.log("Your transaction signature", tx);
+
+    return { matchAccount };
+};
+
+const add_user = async (
+    program: anchor.Program,
+    tokenAccount: PublicKey,
+    matchAccount: Keypair
+) => {
+    // const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
+    //     [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
+    //     program.programId
+    // );
+    // console.log({_pda, _nonce}); // not really sure what i'm doing here but it's 5am and i'm tired yolo
+    const tx = await program.rpc.addUser(new anchor.BN(123),{
+        accounts:{
+            userAsAuthority: provider.wallet.publicKey,
+            // mint: mintA.publicKey,
+            depositTokenAccount: tokenAccount,
+            escrowAccount: matchAccount.publicKey,
+            vaultAccount: provider.wallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        },
+        signers: [provider.wallet.payer],
+    });
+
 };
 
 const run_ops = async () => {
     const program = load_program_from_idl("AVjAc7YszkPzzyNCJ9rNM1Vh9Ve2HpWJUbi6mztCZi6D");
     const { mint, tokenAccount } = await test_mint();
-    await init_contract(
+    const { matchAccount } = await init_contract(
         program,
         tokenAccount,
         mint
+    );
+    await add_user(
+        program,
+        tokenAccount,
+        matchAccount
     );
 };
 

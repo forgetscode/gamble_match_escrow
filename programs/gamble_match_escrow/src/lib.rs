@@ -31,7 +31,11 @@ pub mod gamble_match_escrow {
         ctx.accounts.match_account.add_user_to_match(ctx.accounts.user_account.key(), initializer_amount);
         Ok(())
     }
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
     pub fn add_user(ctx: Context<AddUser>, amount: u64) -> ProgramResult {
         if ctx.accounts.match_account.game_state == false {
             let (_pda, _) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
@@ -104,18 +108,30 @@ pub struct MatchAccount {
 }
  
 impl MatchAccount {
+<<<<<<< HEAD
  
     fn empty_key() -> Pubkey {
         Pubkey::new_from_array([0u8; 32])
     }
  
+=======
+
+    fn empty_key() -> Pubkey {
+        Pubkey::new_from_array([0u8; 32])
+    }
+
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
     pub fn load(&mut self) {
         let rnd_key = MatchAccount::empty_key();
         self.game_state = false;
         self.user_balances = [0_u64; 8];
         self.user_keys = [rnd_key; 8];
     }
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
     fn look_for_empty_idx(&mut self) -> Option<usize> {
         let empty_key = &MatchAccount::empty_key();
         let mut i = 0;
@@ -129,7 +145,11 @@ impl MatchAccount {
         }
         result
     }
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
     pub fn add_user_to_match(&mut self, user_key: Pubkey, user_bal: u64) {
         let empty_idx = self.look_for_empty_idx();
         match empty_idx {
@@ -143,7 +163,11 @@ impl MatchAccount {
         }
     }
 }
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
 impl<'info> InitializeEscrow<'info> {
     fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         let cpi_accounts = Transfer {
@@ -168,7 +192,11 @@ impl<'info> InitializeEscrow<'info> {
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }
 }
+<<<<<<< HEAD
  
+=======
+
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
 impl<'info> AddUser<'info> {
     fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
         let cpi_accounts = Transfer {
