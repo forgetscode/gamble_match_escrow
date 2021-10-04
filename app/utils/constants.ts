@@ -1,0 +1,1 @@
+export const sol_divisor = 1000000000;

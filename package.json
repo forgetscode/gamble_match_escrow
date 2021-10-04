@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "build_deploy": "./build_deploy.sh"
+        "build_deploy": "python3 deploy_anchor.py"
     },
     "dependencies": {
         "@project-serum/anchor": "0.16.2",
