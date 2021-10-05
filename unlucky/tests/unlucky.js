@@ -11,7 +11,7 @@ describe('unlucky', () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
 
-  const provider = anchor.Provider.env()
+  const provider = anchor.Provider.env();
 
   it('Is initialized!', async () => {
     // Add your test here.
@@ -32,6 +32,9 @@ describe('unlucky', () => {
       [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
       program.programId
    );
+
+   //set initial deposit amount for the token transfers
+  const deposit_amount = new anchor.BN(123);
 
     //airdrop lamports to first user
     await provider.connection.confirmTransaction(
@@ -118,7 +121,7 @@ describe('unlucky', () => {
 
 
     //initialize the main account
-    const tx = await program.rpc.initialize(new anchor.BN(123),{
+    const tx = await program.rpc.initialize(deposit_amount ,{
       accounts:{
         initializer: first_user.publicKey,
         mint: mintA.publicKey,
@@ -133,9 +136,14 @@ describe('unlucky', () => {
       signers: [ escrow_account, first_user, vault_handler],
     });
 
-    console.log("Vault token account owner and address");
+    console.log("escrow account balance after initialize");
+    const _lamp = await provider.connection.getBalance(escrow_account.publicKey);
+    console.log(_lamp);
+
+    console.log("Vault token account owner");
     const _info_seventh = await mintA.getAccountInfo(vault_handler.publicKey);
     console.log(_info_seventh.owner);
+    console.log("Vault token account address");
     console.log(_info_seventh.address);
     console.log("vault handler address");
     console.log(vault_handler.publicKey);
@@ -150,9 +158,37 @@ describe('unlucky', () => {
     const _info_ninth = await mintA.getAccountInfo(vault_handler.publicKey);
     console.log(_info_ninth.amount.toNumber());
 
-    //join the main account
-    console.log(second_user_token_account);
-    const tx2 = await program.rpc.join(new anchor.BN(123),{
+    console.log("match state after initialization");
+    const _info_tenth = await program.account.matchAccount.fetch(escrow_account.publicKey);
+    console.log(_info_tenth);
+
+    console.log("checking if pda owns vault account");
+    assert.ok(_info_seventh.owner.toString() === _pda.toString(), "failed");
+    console.log("checking if vault account has correct funds");
+    assert.ok(_info_ninth.amount.toNumber() === deposit_amount.toNumber(), "failed");
+    console.log("checking if match account was updated with initializers values");
+    assert.ok(_info_tenth.userKeys[0].toString() === first_user.publicKey.toString(), "failed");
+    assert.ok(_info_tenth.userBalances[0].toNumber() === deposit_amount.toNumber(), "failed");
+
+    const tx2 = await program.rpc.changeState({
+      accounts:{
+        escrowAccount: escrow_account.publicKey,
+      }
+    });
+
+    console.log("checking if change state is functional");
+    const _info_state = await program.account.matchAccount.fetch(escrow_account.publicKey);
+    assert.ok(_info_state.gameState);
+
+    const tx3 = await program.rpc.changeState({
+      accounts:{
+        escrowAccount: escrow_account.publicKey,
+      }
+    });
+    const _info_state_two = await program.account.matchAccount.fetch(escrow_account.publicKey);
+    assert.ok(!_info_state_two.gameState);
+
+    const tx4 = await program.rpc.join(deposit_amount ,{
       accounts:{
         joiner: second_user.publicKey,
         mint: mintA.publicKey,
@@ -164,6 +200,9 @@ describe('unlucky', () => {
       signers: [second_user],
     });
 
+    console.log("escrow account balance after join");
+    const _lamp2 = await provider.connection.getBalance(escrow_account.publicKey);
+    console.log(_lamp2);
 
     //check first users balance after initializing the account
     console.log("First users lamport balance after initialize transaction");
@@ -182,7 +221,30 @@ describe('unlucky', () => {
     const _info_mime = await mintA.getAccountInfo(vault_handler.publicKey);
     console.log(_info_mime.amount.toNumber());
 
-    console.log("Your transaction signature", tx);
-    assert.ok("initialize completed");
+    console.log("match state after second user joined");
+    const _info_eleventh = await program.account.matchAccount.fetch(escrow_account.publicKey);
+    console.log(_info_eleventh);
+
+
+    console.log("checking if first user pubkey matches matchAccount index 0");
+    assert.ok(_info_eleventh.userKeys[0].toString() === first_user.publicKey.toString(), "failed");
+
+
+    console.log("checking if first user depoit matches matchAccount amount index 0");
+    assert.ok(_info_eleventh.userBalances[0].toNumber() === deposit_amount.toNumber(), "failed");
+
+
+    console.log("checking if second user pubkey matches matchAccount index 1");
+    assert.ok(_info_eleventh.userKeys[1].toString()  === second_user.publicKey.toString(), "failed");
+
+
+    console.log("checking if second user depoit matches matchAccount amount index 1");
+    assert.ok(_info_eleventh.userBalances[0].toNumber() === deposit_amount.toNumber(), "failed");
+
+
+    console.log("Initialize signature", tx);
+    console.log("game state switch on signature", tx2);
+    console.log("game state switch off signature", tx3);
+    console.log("Join signature", tx4);
   });
 });

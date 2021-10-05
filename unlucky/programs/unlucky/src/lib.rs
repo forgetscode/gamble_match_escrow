@@ -9,8 +9,7 @@ pub mod unlucky {
     use super::*;
     const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
     pub fn initialize(ctx: Context<Initialize>, initializer_amount: u64) -> ProgramResult {
-        let match_account = &mut ctx.accounts.escrow_account;
-        match_account.game_state = false;
+        ctx.accounts.escrow_account.load();
 
         let (vault_authority, _vault_authority_bump) =
         Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
@@ -26,19 +25,29 @@ pub mod unlucky {
             Some(vault_authority),
         )?;
 
+        ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.initializer.key(), initializer_amount);
         Ok(())
     }
+
     pub fn join(ctx: Context<Join>, amount: u64) -> ProgramResult {
-        let (_pda, _) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
-        //ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.joiner.key(), amount);
+        if ctx.accounts.escrow_account.game_state == false {
+            let (_pda, _) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
+            token::transfer(
+                ctx.accounts
+                    .into_transfer_to_pda_context(),
+                amount,
+            )?;
+            ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.joiner.key(), amount);
+            Ok(())
+        }
+        else{
+            msg!("The game has reached maximum amount of users and is starting, please create a new lobby.");
+            Ok(())
+        }
+    }
 
-
-        token::transfer(
-            ctx.accounts
-                .into_transfer_to_pda_context(),
-            amount,
-        )?;
-
+    pub fn change_state(ctx: Context<ChangeState>) -> ProgramResult{
+        ctx.accounts.escrow_account.change_state();
         Ok(())
     }
 }
@@ -81,6 +90,12 @@ pub struct Join<'info> {
     #[account(mut)]
     pub vault_handler: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ChangeState<'info>{
+    #[account(mut)]
+    pub escrow_account: Account<'info, MatchAccount>,
 }
 
 #[account]
@@ -128,6 +143,9 @@ impl MatchAccount {
                 self.game_state = true;
             }
         }
+    }
+    pub fn change_state(&mut self){
+        self.game_state = !self.game_state;
     }
 }
 
