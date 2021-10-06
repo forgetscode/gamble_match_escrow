@@ -119,7 +119,6 @@ describe('unlucky', () => {
     console.log(_info_sixth.amount.toNumber());
 
 
-
     //initialize the main account
     const tx = await program.rpc.initialize(deposit_amount ,{
       accounts:{
@@ -136,8 +135,12 @@ describe('unlucky', () => {
       signers: [ escrow_account, first_user, vault_handler],
     });
 
-    console.log("escrow account balance after initialize");
-    const _lamp = await provider.connection.getBalance(escrow_account.publicKey);
+    console.log("escrow balance after initialize");
+    const _lamp5 = await provider.connection.getBalance(escrow_account.publicKey);
+    console.log(_lamp5);
+
+    console.log("vault handler account balance after initialize");
+    const _lamp = await provider.connection.getBalance(vault_handler.publicKey);
     console.log(_lamp);
 
     console.log("Vault token account owner");
@@ -196,12 +199,17 @@ describe('unlucky', () => {
         escrowAccount: escrow_account.publicKey,
         vaultHandler: vault_handler.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: anchor.web3.SystemProgram.programId,
       },
       signers: [second_user],
     });
 
-    console.log("escrow account balance after join");
-    const _lamp2 = await provider.connection.getBalance(escrow_account.publicKey);
+    console.log("escrow balance after join");
+    const _lamp4 = await provider.connection.getBalance(escrow_account.publicKey);
+    console.log(_lamp4);
+
+    console.log("vault handler balance after join");
+    const _lamp2 = await provider.connection.getBalance(vault_handler.publicKey);
     console.log(_lamp2);
 
     //check first users balance after initializing the account

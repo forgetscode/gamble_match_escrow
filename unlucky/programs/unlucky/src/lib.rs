@@ -8,6 +8,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 pub mod unlucky {
     use super::*;
     const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
+    const RENT_AMOUNT: u64 = 4370880;
     pub fn initialize(ctx: Context<Initialize>, initializer_amount: u64) -> ProgramResult {
         ctx.accounts.escrow_account.load();
 
@@ -32,12 +33,28 @@ pub mod unlucky {
     pub fn join(ctx: Context<Join>, amount: u64) -> ProgramResult {
         if ctx.accounts.escrow_account.game_state == false {
             let (_pda, _) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
+
             token::transfer(
                 ctx.accounts
                     .into_transfer_to_pda_context(),
                 amount,
             )?;
             ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.joiner.key(), amount);
+            
+            let ix = anchor_lang::solana_program::system_instruction::transfer(
+                ctx.accounts.joiner.key,
+                ctx.accounts.vault_handler.key,
+                RENT_AMOUNT,
+            );
+
+            anchor_lang::solana_program::program::invoke(
+                &ix,
+                &[
+                    ctx.accounts.joiner.to_account_info().clone(),
+                    ctx.accounts.vault_handler.to_account_info().clone(),
+                ],
+            )?;
+
             Ok(())
         }
         else{
@@ -90,6 +107,7 @@ pub struct Join<'info> {
     #[account(mut)]
     pub vault_handler: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
