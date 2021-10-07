@@ -4,4 +4,5 @@
 target
 **/*.rs.bk
 node_modules
-./Anchor.toml
+Anchor.toml
+/test-ledger/
