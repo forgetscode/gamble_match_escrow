@@ -109,6 +109,7 @@ describe('unlucky', () => {
     //initialize vault handler
     const vault_handler = anchor.web3.Keypair.generate()
     await balance_track.add_keypairs([
+      [provider.wallet.payer, "providerWallet"],
       [first_user, "first_user"],
       [second_user, "second_user"],
       [escrow_account, "escrow_account"],
@@ -384,16 +385,16 @@ describe('unlucky', () => {
     console.log("game state after remove user");
     const info_state_three = await program.account.matchAccount.fetch(escrow_account.publicKey);
     console.log(info_state_three);
-
-    console.log("Vault token amount after user left");
+    console.log(`\n\n\nVault token amount after user joined: ${_info_seventh2.amount.toNumber()}`)
     const _info_test_three = await mintA.getAccountInfo(vault_handler.publicKey);
-    console.log(_info_test_three.amount.toNumber());
+    console.log(`Vault token amount after user cancelled: ${_info_test_three.amount.toNumber()}`);
+    // console.log(_info_test_three.amount.toNumber());
 
-    console.log("Initialize signature", tx);
-    console.log("game state switch on signature", tx2);
-    console.log("game state switch off signature", tx3);
-    console.log("Join signature", tx4);
-    console.log("leave signature", tx5);
+    // console.log("Initialize signature", tx);
+    // console.log("game state switch on signature", tx2);
+    // console.log("game state switch off signature", tx3);
+    // console.log("Join signature", tx4);
+    // console.log("leave signature", tx5);
     await balance_track.log_all_changes();
 
   });
