@@ -1,0 +1,16 @@
+[programs.localnet]
+gamble_match_escrow = "3YF3zQGgr1JpK1t9SXnLP9yLCbze3YHCmV1WNAG16pq3"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+<<<<<<< HEAD
+wallet = "~/.config/solana/id.json"
+=======
+wallet = "~/.config/solana/id4.json"
+>>>>>>> ed595ca30fdabcb1bc992a02df08d6ca7cff3dc1
+
+[scripts]
+test = "mocha -t 1000000 tests/"

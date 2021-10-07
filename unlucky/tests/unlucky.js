@@ -31,8 +31,7 @@ describe('unlucky', () => {
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
       [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
       program.programId
-    );
-    let pda = _pda;
+   );
 
    //set initial deposit amount for the token transfers
   const deposit_amount = new anchor.BN(123);
@@ -251,56 +250,9 @@ describe('unlucky', () => {
     assert.ok(_info_eleventh.userBalances[0].toNumber() === deposit_amount.toNumber(), "failed");
 
 
-    console.log("Vault token account owner");
-    const _info_seventh2 = await mintA.getAccountInfo(vault_handler.publicKey);
-    console.log(_info_seventh2.owner);
-    console.log("Vault token account address");
-    console.log(_info_seventh2.address);
-
-    console.log("Vault token amount");
-    const _info_mime1 = await mintA.getAccountInfo(vault_handler.publicKey);
-    console.log(_info_mime1.amount.toNumber());
-
-    console.log("pda");
-    console.log(pda);
-
-    
-    console.log("first user token A amount after transfer");
-    const _info_second_token = await mintA.getAccountInfo(second_user_token_account);
-    console.log(_info_second_token);
-
-
-    const tx5 = await program.rpc.removeUserFromMatch( second_user.publicKey,_nonce,{
-      accounts:{
-        leaver: second_user.publicKey,
-        mint: mintA.publicKey,
-        leaverTokenAccount: second_user_token_account,
-        escrowAccount: escrow_account.publicKey,
-        vaultHandler: vault_handler.publicKey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        programSigner: pda,
-      },
-      signers: [second_user],
-    });
-
-    
-
-
-    console.log("game state after remove user");
-    const info_state_three = await program.account.matchAccount.fetch(escrow_account.publicKey);
-    console.log(info_state_three);
-
-    console.log("Vault token amount after user left");
-    const _info_test_three = await mintA.getAccountInfo(vault_handler.publicKey);
-    console.log(_info_test_three.amount.toNumber());
-
     console.log("Initialize signature", tx);
     console.log("game state switch on signature", tx2);
     console.log("game state switch off signature", tx3);
     console.log("Join signature", tx4);
-    console.log("leave signature", tx5);
-
-
   });
 });
