@@ -32,8 +32,6 @@ pub mod unlucky {
 
     pub fn join(ctx: Context<Join>, amount: u64) -> ProgramResult {
         if ctx.accounts.escrow_account.game_state == false {
-            let (_pda, _) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
-
             token::transfer(
                 ctx.accounts
                     .into_transfer_to_pda_context(),
@@ -66,6 +64,39 @@ pub mod unlucky {
     pub fn change_state(ctx: Context<ChangeState>) -> ProgramResult{
         ctx.accounts.escrow_account.change_state();
         Ok(())
+    }
+
+    pub fn remove_user_from_match(ctx: Context<RemoveUserFromMatch>, key: Pubkey, nonce: u8 ) -> ProgramResult{
+        if ctx.accounts.escrow_account.game_state == false {
+            if ctx.accounts.leaver.key() == key {
+                let return_balance = ctx.accounts.escrow_account.remove_user_from_match(ctx.accounts.leaver.key());
+
+                let seeds = &[&VAULT_AUTHORITY_SEED[..], &[nonce]];
+                let signer = &[&seeds[..]];
+
+                let cpi_accounts = Transfer {
+                    from:
+                    ctx.accounts
+                        .vault_handler
+                        .to_account_info()
+                        .clone(),
+                    to: ctx.accounts.leaver_token_account.to_account_info().clone(),
+                    authority: ctx.accounts.program_signer.to_account_info().clone(),
+                };
+
+                let cpi_ctx = CpiContext::new_with_signer(ctx.accounts.token_program.clone();, cpi_accounts, signer);
+                token::transfer(cpi_ctx ,return_balance)?;
+                Ok(())
+            }
+            else{
+                msg!("Key was not found in match");
+                Ok(())
+            }
+        }
+        else{
+            msg!("You cannot leave the lobby as the game is starting.");
+            Ok(())
+        }
     }
 }
 
@@ -116,6 +147,22 @@ pub struct ChangeState<'info>{
     pub escrow_account: Account<'info, MatchAccount>,
 }
 
+#[derive(Accounts)]
+pub struct RemoveUserFromMatch<'info>{
+    #[account(signer, mut)]
+    pub leaver: AccountInfo<'info>,
+    pub mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub leaver_token_account:Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub escrow_account: Account<'info, MatchAccount>,
+    #[account(mut)]
+    pub vault_handler: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+    pub program_signer: AccountInfo<'info>,
+}
+
 #[account]
 pub struct MatchAccount {
     pub game_state: bool,
@@ -162,6 +209,15 @@ impl MatchAccount {
             }
         }
     }
+
+    pub fn remove_user_from_match(&mut self, user_key: Pubkey) -> u64{
+        let position = self.user_keys.iter().position(|&key| key == user_key).unwrap();
+        self.user_keys[position] = MatchAccount::empty_key();
+        let return_balance = self.user_balances[position].clone();
+        self.user_balances[position] =  0;
+        return_balance
+    }
+
     pub fn change_state(&mut self){
         self.game_state = !self.game_state;
     }
