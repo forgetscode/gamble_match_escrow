@@ -1,7 +1,6 @@
 const anchor = require('@project-serum/anchor');
 const assert = require("assert");
 const { TOKEN_PROGRAM_ID, Token } = require("@solana/spl-token");
-const { Console } = require("console");
 
 
 const initializerAmount = 500;
@@ -10,8 +9,23 @@ class MonitorBalances {
   keypair_balances = {}
   constructor(provider) {
     this.provider = provider;
+    // for (const key in this.provider) {
+    //   this[key] = this.provider[key];
+    // }
   }
+  add_keypairs = async kp_names => {
+    if (!Array.isArray(kp_names)) {
+      throw Error("add_keypairs needs an array!");
+    }
+    for (const item of kp_names) {
+      let kp, name;
+      kp = item[0];
+      name = item[1];
+      await this.add_keypair(kp, name);
+    }
+  };
   add_keypair = async (kp, name) => {
+    const _name = name != null ? name : kp.name;
     const balance = await this.provider.connection.getBalance(kp.publicKey);
     if (!this.keypair_balances.hasOwnProperty(kp.publicKey)) {
       this.keypair_balances[kp.publicKey] = [];
@@ -19,31 +33,66 @@ class MonitorBalances {
     this.keypair_balances[kp.publicKey] = {
       balances: [
         ...this.keypair_balances[kp.publicKey],
-        balance
+        {
+          balance,
+          update_name: "init"
+        }
       ],
-      name
+      name: _name,
+      pk: kp.publicKey
     };
   }
-  get_balance = async pk => {
+  get_balance = async (pk, update_name) => {
+    // console.log(pk);
     const new_balance = await this.provider.connection.getBalance(pk);
     return {
-      [pk]: new_balance
+      [pk]: {
+        balance: new_balance,
+        update_name
+      }
     };
   }
-  check_for_changes = async () => {
+  get_new_balance = async (update_name) => {
+    console.log(this.keypair_balances);
     const new_balance_promises = [];
     for (const pk in this.keypair_balances) {
-      new_balance_promises.push(this.get_balance(pk));
+      console.log(pk, update_name);
+      await this.get_balance(this.keypair_balances[pk].pk, update_name);
+      new_balance_promises.push(this.get_balance(this.keypair_balances[pk].pk, update_name));
     }
-    const new_balances = Object.assign({}, ...await Promise.all(new_balance_promises));
+    return Object.assign({}, ...await Promise.all(new_balance_promises));
+  };
+  update_balances = async update_name => {
+    const new_balances = await this.get_new_balance(update_name);
+    for (const key in this.keypair_balances) {
+      this.keypair_balances[key].balances = [
+          new_balances[key],
+          ...this.keypair_balances[key].balances
+      ];
+    }
+  };
+  log_all_changes = async () => {
+    const new_balances = await this.get_new_balance();
     for (const [key, account] of Object.entries(this.keypair_balances)) {
-      const last_balance = account.balances[account.balances.length - 1];
-      if (last_balance !== new_balances[key]) {
-        console.log(`The balance of account ${account.name} has changed! Was ${last_balance} now is ${new_balances[key]}`);
+      let prev = null;
+      let updates = [];
+      for (const balance of [
+        new_balances[key],
+        ...account.balances
+      ].reverse()) {
+        if (prev !== null) {
+          updates.push(`Update ${balance.name} :: ${prev.balance} -> ${balance.balance}`);
+        } else {
+          updates.push(`Initial :: ${balance.balance}`);
+        }
+        prev = balance;
       }
+      console.log(`Balance changes for ${account.name}@${key}:\n${updates.join("\n")}`);
+      console.log(`######################################`);
     }
   };
 }
+
 
 describe('unlucky', () => {
 
@@ -51,26 +100,36 @@ describe('unlucky', () => {
   anchor.setProvider(anchor.Provider.env());
 
   const provider = anchor.Provider.env();
-
+  const balance_track = new MonitorBalances(provider);
   it('Is initialized!', async () => {
     // Add your test here.
     const program = anchor.workspace.Unlucky;
 
     //initialize key pair for our first user
-    const first_user = anchor.web3.Keypair.generate()
+    const first_user = anchor.web3.Keypair.generate();
+    // await balance_track.add_keypair(first_user);
     //initialize key pair for our second user
     const second_user = anchor.web3.Keypair.generate()
+    // await balance_track.add_keypair(second_user);
     //initialize key pair for the escrow account
     const escrow_account = anchor.web3.Keypair.generate()
     //initialize token minter to fund users with Token A
     const token_minter = anchor.web3.Keypair.generate()
     //initialize vault handler
     const vault_handler = anchor.web3.Keypair.generate()
+    await balance_track.add_keypairs([
+      [first_user, "first_user"],
+      [second_user, "second_user"],
+      [escrow_account, "escrow_account"],
+      [vault_handler, "vault_handler"],
+      [token_minter, "token_minter"]
+    ])
     //find pda
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
         program.programId
     );
+    let pda = _pda;
 
     //set initial deposit amount for the token transfers
     const deposit_amount = new anchor.BN(123);
@@ -92,6 +151,7 @@ describe('unlucky', () => {
         await provider.connection.requestAirdrop(token_minter.publicKey, 10000000000),
         'confirmed airdrop'
     );
+    await balance_track.update_balances("airdrop");
 
     //check first users balance
     console.log("First users balance lamports");
@@ -173,6 +233,7 @@ describe('unlucky', () => {
       },
       signers: [ escrow_account, first_user, vault_handler],
     });
+    await balance_track.update_balances("rpc.initialize");
 
     console.log("escrow balance after initialize");
     const _lamp5 = await provider.connection.getBalance(escrow_account.publicKey);
@@ -217,6 +278,7 @@ describe('unlucky', () => {
         escrowAccount: escrow_account.publicKey,
       }
     });
+    await balance_track.update_balances("changeState");
 
     console.log("checking if change state is functional");
     const _info_state = await program.account.matchAccount.fetch(escrow_account.publicKey);
@@ -242,6 +304,7 @@ describe('unlucky', () => {
       },
       signers: [second_user],
     });
+    await balance_track.update_balances("join");
 
     console.log("escrow balance after join");
     const _lamp4 = await provider.connection.getBalance(escrow_account.publicKey);
@@ -287,7 +350,7 @@ describe('unlucky', () => {
 
     console.log("checking if second user depoit matches matchAccount amount index 1");
     assert.ok(_info_eleventh.userBalances[0].toNumber() === deposit_amount.toNumber(), "failed");
-
+    await balance_track.log_all_changes();
 
     console.log("Initialize signature", tx);
     console.log("game state switch on signature", tx2);
