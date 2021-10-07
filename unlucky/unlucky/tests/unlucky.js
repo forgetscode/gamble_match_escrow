@@ -29,30 +29,30 @@ describe('unlucky', () => {
     const vault_handler = anchor.web3.Keypair.generate()
     //find pda
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
-      program.programId
+        [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
+        program.programId
     );
     let pda = _pda;
 
-   //set initial deposit amount for the token transfers
-  const deposit_amount = new anchor.BN(123);
+    //set initial deposit amount for the token transfers
+    const deposit_amount = new anchor.BN(123);
 
     //airdrop lamports to first user
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(first_user.publicKey, 10000000000),
-      'confirmed airdrop'
+        await provider.connection.requestAirdrop(first_user.publicKey, 10000000000),
+        'confirmed airdrop'
     );
-    
+
     //airdrop lamports to second user
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(second_user.publicKey, 10000000000),
-      'confirmed airdrop'
+        await provider.connection.requestAirdrop(second_user.publicKey, 10000000000),
+        'confirmed airdrop'
     );
 
     //airdrop lamports to token minter
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(token_minter.publicKey, 10000000000),
-      'confirmed airdrop'
+        await provider.connection.requestAirdrop(token_minter.publicKey, 10000000000),
+        'confirmed airdrop'
     );
 
     //check first users balance
@@ -72,12 +72,12 @@ describe('unlucky', () => {
 
     //token minter creates token mint A
     mintA = await Token.createMint(
-      provider.connection,
-      token_minter,
-      token_minter.publicKey,
-      null,
-      0,
-      TOKEN_PROGRAM_ID
+        provider.connection,
+        token_minter,
+        token_minter.publicKey,
+        null,
+        0,
+        TOKEN_PROGRAM_ID
     );
 
     //check token minters balance after minting A
@@ -92,18 +92,18 @@ describe('unlucky', () => {
 
     //mint tokens 500 to first users token account
     await mintA.mintTo(
-      first_user_token_account,
-      token_minter.publicKey,
-      [token_minter],
-      initializerAmount
+        first_user_token_account,
+        token_minter.publicKey,
+        [token_minter],
+        initializerAmount
     );
-  
+
     //mint tokens 500 to first users token account
     await mintA.mintTo(
-      second_user_token_account,
-      token_minter.publicKey,
-      [token_minter],
-      initializerAmount
+        second_user_token_account,
+        token_minter.publicKey,
+        [token_minter],
+        initializerAmount
     );
 
     //check token minters balance after minting A
@@ -264,11 +264,11 @@ describe('unlucky', () => {
     console.log("pda");
     console.log(pda);
 
-    console.log("second token account owner");
-    const _info_seventh3 = await mintA.getAccountInfo(second_user_token_account.publicKey);
-    console.log(_info_seventh3.owner);
-    console.log("second token account address");
-    console.log(_info_seventh3.address);
+
+    console.log("first user token A amount after transfer");
+    const _info_second_token = await mintA.getAccountInfo(second_user_token_account);
+    console.log(_info_second_token);
+
 
     const tx5 = await program.rpc.removeUserFromMatch( second_user.publicKey,_nonce,{
       accounts:{
@@ -279,12 +279,12 @@ describe('unlucky', () => {
         vaultHandler: vault_handler.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: anchor.web3.SystemProgram.programId,
-        programSigner:pda,
+        programSigner: pda,
       },
       signers: [second_user],
     });
 
-    
+
 
 
     console.log("game state after remove user");
@@ -293,12 +293,13 @@ describe('unlucky', () => {
 
     console.log("Vault token amount after user left");
     const _info_test_three = await mintA.getAccountInfo(vault_handler.publicKey);
-    console.log(_info_tesst_three.amount.toNumber());
+    console.log(_info_test_three.amount.toNumber());
 
     console.log("Initialize signature", tx);
     console.log("game state switch on signature", tx2);
     console.log("game state switch off signature", tx3);
     console.log("Join signature", tx4);
+    console.log("leave signature", tx5);
 
 
   });

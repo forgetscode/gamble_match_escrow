@@ -13,7 +13,7 @@ pub mod unlucky {
         ctx.accounts.escrow_account.load();
 
         let (vault_authority, _vault_authority_bump) =
-        Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
+            Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
 
         token::transfer(
             ctx.accounts.into_transfer_to_pda_context(),
@@ -38,7 +38,7 @@ pub mod unlucky {
                 amount,
             )?;
             ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.joiner.key(), amount);
-            
+
             let ix = anchor_lang::solana_program::system_instruction::transfer(
                 ctx.accounts.joiner.key,
                 ctx.accounts.vault_handler.key,
@@ -75,8 +75,8 @@ pub mod unlucky {
                 let signer = &[&seeds[..]];
 
                 let cpi_accounts = Transfer {
-                    from: 
-                        ctx.accounts
+                    from:
+                    ctx.accounts
                         .vault_handler
                         .to_account_info()
                         .clone(),
@@ -91,8 +91,8 @@ pub mod unlucky {
             else{
                 msg!("Key was not found in match");
                 Ok(())
-            }    
-        }       
+            }
+        }
         else{
             msg!("You cannot leave the lobby as the game is starting.");
             Ok(())
@@ -108,17 +108,17 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub initializer_deposit_token_account:Account<'info, TokenAccount>,
     #[account(
-        init,
-        payer = initializer,
-        space = 500)]
+    init,
+    payer = initializer,
+    space = 500)]
     pub escrow_account: Account<'info, MatchAccount>,
     #[account(mut)]
     pub vault_handler: AccountInfo<'info>,
     #[account(
-        init,
-        payer = initializer,
-        token::mint = mint,
-        token::authority = vault_handler,
+    init,
+    payer = initializer,
+    token::mint = mint,
+    token::authority = vault_handler,
     )]
     pub vault_account: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
@@ -171,18 +171,18 @@ pub struct MatchAccount {
 }
 
 impl MatchAccount {
- 
+
     fn empty_key() -> Pubkey {
         Pubkey::new_from_array([0u8; 32])
     }
- 
+
     pub fn load(&mut self) {
         let rnd_key = MatchAccount::empty_key();
         self.game_state = false;
         self.user_balances = [0_u64; 8];
         self.user_keys = [rnd_key; 8];
     }
- 
+
     fn look_for_empty_idx(&mut self) -> Option<usize> {
         let empty_key = &MatchAccount::empty_key();
         let mut i = 0;
@@ -196,7 +196,7 @@ impl MatchAccount {
         }
         result
     }
- 
+
     pub fn add_user_to_match(&mut self, user_key: Pubkey, user_bal: u64) {
         let empty_idx = self.look_for_empty_idx();
         match empty_idx {
@@ -213,7 +213,7 @@ impl MatchAccount {
     pub fn remove_user_from_match(&mut self, user_key: Pubkey) -> u64{
         let position = self.user_keys.iter().position(|&key| key == user_key).unwrap();
         self.user_keys[position] = MatchAccount::empty_key();
-        let return_balance = self.user_balances[position].clone(); 
+        let return_balance = self.user_balances[position].clone();
         self.user_balances[position] =  0;
         return_balance
     }
@@ -258,4 +258,3 @@ impl<'info> Join<'info> {
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }
 }
-
