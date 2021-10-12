@@ -8,13 +8,13 @@ import { ConnectionProvider, useWallet, WalletProvider } from '@solana/wallet-ad
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Idl } from "@project-serum/anchor/src/idl";
 
-import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, Token, AccountInfo } from "@solana/spl-token";
 import * as anchor from '@project-serum/anchor';
 import React from 'react';
 
-//mint:"BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76"
-//wallet_one:"5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH" token_account:"Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW"
-//wallet_two:"DfT3LJ75YTamopdp9grXpUv3ZrtqGfsDiJghBKn5DJbB" token_account "2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy"
+// mint:"BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76"
+// wallet_one:"5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH" token_account:"Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW"
+// wallet_two:"DfT3LJ75YTamopdp9grXpUv3ZrtqGfsDiJghBKn5DJbB" token_account "2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy"
 
 type IDL = {
   metadata: {
@@ -61,7 +61,7 @@ function App() {
   async function getMint(
       provider: Provider,
       mintKey: string | PublicKey
-  ) {
+  ): Promise<[ Token, AccountInfo ]> {
     const _mintKey = typeof mintKey === "string" ? new PublicKey(mintKey) : mintKey;
     const mint = new Token(
         provider.connection,
@@ -81,9 +81,9 @@ function App() {
     const provider = await getProvider();
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
-
-    let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
-    let user_token_account = new PublicKey("Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW");
+    const [ mint, user_token_account ] = await getMint(provider, "BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
+    // let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
+    // let user_token_account = new PublicKey("Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW");
 
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
@@ -97,8 +97,8 @@ function App() {
     const tx = await program.rpc.initialize(deposit_amount, {
       accounts: {
         initializer: provider.wallet.publicKey,
-        mint: mintA,
-        initializerDepositTokenAccount: user_token_account,
+        mint: mint.publicKey,
+        initializerDepositTokenAccount: user_token_account.address,
         tempTokenAccount: vault_handler.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
