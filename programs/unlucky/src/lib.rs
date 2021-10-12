@@ -19,14 +19,6 @@ pub mod unlucky {
     }
 }
 
-pub fn try_make_token_account(account_info: &AccountInfo) -> Result<TokenAccount, ProgramError> {
-    let data: Ref<&mut [u8]> = account_info.try_borrow_data()?;
-    let data = &mut &**data;
-    let token_account = TokenAccount::try_deserialize(data)?;
-    std::mem::size_of::<MatchAccount>();
-    Ok(token_account)
-}
-
 #[derive(Accounts)]
 #[instruction(bump: u8)]
 pub struct Initialize<'info> {
