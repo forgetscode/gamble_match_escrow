@@ -1,263 +1,159 @@
+use std::cell::Ref;
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, SetAuthority, TokenAccount, Transfer, Mint};
+use anchor_spl::token::{self, SetAuthority, TokenAccount, Transfer, Mint, Token};
 use spl_token::instruction::AuthorityType;
+use spl_token::state::Multisig;
 
-declare_id!("3JJwGuyPG5yiyWz5bgTGS4VdAAvHnpwinVT8ZcYVARKB");
+declare_id!("2NG4CobL3ZSBgCkfu3p9L3stuuoTMWTkmSMHrmdrZCcN");
 
 #[program]
 pub mod unlucky {
+    use spl_token::instruction::AuthorityType;
     use super::*;
-    const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
+    const VAULT_AUTHORITY_SEED: &[u8] = b"test-seed";
     const RENT_AMOUNT: u64 = 4370880;
-    pub fn initialize(ctx: Context<Initialize>, initializer_amount: u64) -> ProgramResult {
-        // ctx.accounts.escrow_account.load();
-
-        let (vault_authority, _vault_authority_bump) =
-            Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
-
-        token::transfer(
-            ctx.accounts.into_transfer_to_pda_context(),
-            initializer_amount,
-        )?;
-
-        token::set_authority(
-            ctx.accounts.into_set_authority_context(),
-            AuthorityType::AccountOwner,
-            Some(vault_authority),
-        )?;
-
-        // ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.initializer.to_account_info().key(), initializer_amount);
+    // Initializes a new multisig account with a set of owners and a threshold.
+    // pub fn create_multisig(
+    //     ctx: Context<CreateMultisig>,
+    //     owners: Vec<Pubkey>,
+    //     threshold: u64,
+    //     nonce: u8,
+    // ) -> ProgramResult {
+    //     let multisig = &mut ctx.accounts.multisig;
+    //     let mut i = 0;
+    //     let multisig_length = multisig.signers.len();
+    //     for owner in &owners {
+    //         if i >= multisig_length {
+    //             break;
+    //         }
+    //         multisig.signers[i] = owner.clone();
+    //         i += 1;
+    //     }
+    //     // multisig.owners = owners;
+    //     // multisig.threshold = threshold;
+    //     // multisig.nonce = nonce;
+    //     Ok(())
+    // }
+    pub fn start_match(ctx: Context<Initialize>, bump: u8) -> ProgramResult {
+        ctx.accounts.match_account.bump = bump;
+        ctx.accounts.match_account.authority = *ctx.accounts.authority.key;
+        ctx.accounts.match_account.is_started = false;
+        // msg!("match_account_id: {} | match_account_id_owner: {}", ctx.accounts.match_account_id.key, ctx.accounts.match_account_id.owner.key());
+        // msg!("match_account: {} | match_account_owner: {}", ctx.accounts.match_account, ctx.accounts.match_account.owner.key());
+        // let match_id: &[u8] = &ctx.accounts.match_account.key.to_bytes()[..];
+        // let (vault_authority, _vault_authority_bump) = Pubkey::find_program_address(&[match_id], ctx.program_id);
+        // token::set_authority(
+        //     ctx.accounts.transfer_account_ownership(),
+        //     AuthorityType::AccountOwner,
+        //     Some(vault_authority.clone()),
+        // )?;
         Ok(())
     }
-
-    pub fn join(ctx: Context<Join>, amount: u64) -> ProgramResult {
-        if ctx.accounts.escrow_account.game_state == false {
-            token::transfer(
-                ctx.accounts
-                    .into_transfer_to_pda_context(),
-                amount,
-            )?;
-            ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.joiner.key(), amount);
-
-            let ix = anchor_lang::solana_program::system_instruction::transfer(
-                ctx.accounts.joiner.key,
-                ctx.accounts.vault_handler.key,
-                RENT_AMOUNT,
-            );
-
-            anchor_lang::solana_program::program::invoke(
-                &ix,
-                &[
-                    ctx.accounts.joiner.to_account_info().clone(),
-                    ctx.accounts.vault_handler.to_account_info().clone(),
-                ],
-            )?;
-
-            Ok(())
-        }
-        else{
-            msg!("The game has reached maximum amount of users and is starting, please create a new lobby.");
-            Ok(())
-        }
-    }
-
-    pub fn change_state(ctx: Context<ChangeState>) -> ProgramResult{
-        ctx.accounts.escrow_account.change_state();
-        Ok(())
-    }
-
-    pub fn remove_user_from_match(ctx: Context<RemoveUserFromMatch>, key: Pubkey) -> ProgramResult{
-        if ctx.accounts.escrow_account.game_state == false {
-            if ctx.accounts.leaver.key() == key {
-                let (_, nonce) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
-
-                let return_balance = ctx.accounts.escrow_account.remove_user_from_match(ctx.accounts.leaver.key());
-
-                let seeds = &[&VAULT_AUTHORITY_SEED[..], &[nonce]];
-                let signer = &[&seeds[..]];
-
-                let cpi_accounts = Transfer {
-                    from:
-                    ctx.accounts
-                        .vault_handler
-                        .to_account_info()
-                        .clone(),
-                    to: ctx.accounts.leaver_token_account.to_account_info().clone(),
-                    authority: ctx.accounts.program_signer.to_account_info().clone(),
-                };
-
-                let cpi_ctx = CpiContext::new_with_signer(ctx.accounts.token_program.clone(), cpi_accounts, signer);
-                token::transfer(cpi_ctx ,return_balance)?;
-                Ok(())
-            }
-            else{
-                msg!("Key was not found in match");
-                Ok(())
-            }
-        }
-        else{
-            msg!("You cannot leave the lobby as the game is starting.");
-            Ok(())
-        }
-    }
+    // pub fn set_token_acc_owners(ctx: Context<Auth>) -> ProgramResult {
+    //     let cpi_account = ctx.accounts.transfer_account_ownership();
+    //     if let Err(e) = cpi_account {
+    //         return Err(e);
+    //     }
+    //     spl_token::instruction::set_authority()
+    //     let cpi_account = cpi_account.unwrap();
+    //     // let mut remaining_accounts: &[AccountInfo] = ctx.remaining_accounts;
+    //     let (vault_authority, _vault_authority_bump) =
+    //         Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
+    //     token::set_authority(
+    //         cpi_account,
+    //         AuthorityType::AccountOwner,
+    //         Some(vault_authority.clone()),
+    //     )?;
+    //     Ok(())
+    // }
 }
 
+pub fn try_make_token_account(account_info: &AccountInfo) -> Result<TokenAccount, ProgramError> {
+    let data: Ref<&mut [u8]> = account_info.try_borrow_data()?;
+    let data = &mut &**data;
+    let token_account = TokenAccount::try_deserialize(data)?;
+    std::mem::size_of::<MatchAccount>();
+    Ok(token_account)
+}
+
+// #[derive(Accounts)]
+// pub struct CreateMultisig<'info> {
+//     #[account(zero)]
+//     multisig: ProgramAccount<'info, Multisig>,
+// }
+
 #[derive(Accounts)]
+#[instruction(bump: u8)]
 pub struct Initialize<'info> {
     #[account(mut)]
     pub initializer: Signer<'info>,
-    pub mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub initializer_deposit_token_account: Account<'info, TokenAccount>,
+    #[account(mut, signer)]
+    pub authority: AccountInfo<'info>,
     // #[account(
     //     init,
     //     payer = initializer,
-    //     space = 500
+    //     token::mint = mint,
+    //     token::authority = vault_handler,
     // )]
-    // pub escrow_account: Account<'info, MatchAccount>,
-    #[account(mut)]
-    pub vault_handler: AccountInfo<'info>,
+    // pub vault_account: Account<'info, TokenAccount>,
     #[account(
         init,
+        seeds=[authority.key().as_ref()],
+        bump = bump,
         payer = initializer,
-        token::mint = mint,
-        token::authority = vault_handler,
+        space = std::mem::size_of::<MatchAccount>()
     )]
-    pub vault_account: Account<'info, TokenAccount>,
+    pub match_account: Account<'info, MatchAccount>,
+    // pub match_account_id: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
-    pub token_program: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct Join<'info> {
-    #[account(signer, mut)]
-    pub joiner: AccountInfo<'info>,
-    pub mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub deposit_token_account:Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub escrow_account: Account<'info, MatchAccount>,
-    #[account(mut)]
-    pub vault_handler: AccountInfo<'info>,
-    pub token_program: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct ChangeState<'info>{
-    #[account(mut)]
-    pub escrow_account: Account<'info, MatchAccount>,
-}
-
-#[derive(Accounts)]
-pub struct RemoveUserFromMatch<'info>{
-    #[account(signer, mut)]
-    pub leaver: AccountInfo<'info>,
-    pub mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub leaver_token_account:Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub escrow_account: Account<'info, MatchAccount>,
-    #[account(mut)]
-    pub vault_handler: AccountInfo<'info>,
-    pub token_program: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-    pub program_signer: AccountInfo<'info>,
+    // pub token_program: AccountInfo<'info>,
 }
 
 #[account]
 pub struct MatchAccount {
-    pub game_state: bool,
-    pub user_balances: [u64; 8],
-    pub user_keys: [Pubkey; 8]
+    authority: Pubkey,
+    bump: u8,
+    is_started: bool
 }
+//
+// impl MatchAccount {
+//     pub fn load(&mut self) {
+//         // self.match_id = match_id;
+//         self.game_started = false;
+//     }
+// }
+// #[derive(Accounts)]
+// pub struct Auth<'info> {
+//     #[account(mut)]
+//     pub signer: Signer<'info>,
+//     #[account(mut)]
+//     pub user_temp_token_account: Account<'info, TokenAccount>,
+//     pub token_program: AccountInfo<'info>,
+//     #[account(zero)]
+//     transaction: Account<'info, Transaction>,
+// }
 
-impl MatchAccount {
-
-    fn empty_key() -> Pubkey {
-        Pubkey::new_from_array([0u8; 32])
-    }
-
-    pub fn load(&mut self) {
-        let rnd_key = MatchAccount::empty_key();
-        self.game_state = false;
-        self.user_balances = [0_u64; 8];
-        self.user_keys = [rnd_key; 8];
-    }
-
-    fn look_for_empty_idx(&mut self) -> Option<usize> {
-        let empty_key = &MatchAccount::empty_key();
-        let mut i = 0;
-        let mut result: Option<usize> = None;
-        for key in &self.user_keys {
-            if key == empty_key {
-                result = Some(i);
-                break;
-            }
-            i += 1;
-        }
-        result
-    }
-
-    pub fn add_user_to_match(&mut self, user_key: Pubkey, user_bal: u64) {
-        let empty_idx = self.look_for_empty_idx();
-        match empty_idx {
-            Some(empty_idx) => {
-                self.user_keys[empty_idx] = user_key;
-                self.user_balances[empty_idx] = user_bal;
-            },
-            None => {
-                self.game_state = true;
-            }
-        }
-    }
-
-    pub fn remove_user_from_match(&mut self, user_key: Pubkey) -> u64{
-        let position = self.user_keys.iter().position(|&key| key == user_key).unwrap();
-        self.user_keys[position] = MatchAccount::empty_key();
-        let return_balance = self.user_balances[position].clone();
-        self.user_balances[position] = 0;
-        return_balance
-    }
-
-    pub fn change_state(&mut self){
-        self.game_state = !self.game_state;
-    }
-}
-
+// pub struct ChangeAuthTransaction {
+//     // The multisig account this transaction belongs to.
+//     multisig: Pubkey,
+//     // Target program to execute against.
+//     program_id: Pubkey,
+//     // Accounts required for the transaction.
+//     accounts: Vec<TransactionAccount>,
+//     // Instruction data for the transaction.
+//     data: Vec<u8>,
+//     // signers[index] is true iff multisig.owners[index] signed the transaction.
+//     signers: Vec<bool>,
+//     // Boolean ensuring one time execution.
+//     did_execute: bool,
+// }
 impl<'info> Initialize<'info> {
-    fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        let cpi_accounts = Transfer {
-            from: self
-                .initializer_deposit_token_account
-                .to_account_info()
-                .clone(),
-            to: self.vault_account.to_account_info().clone(),
-            authority: self.initializer.to_account_info().clone(),
-        };
-        CpiContext::new(self.token_program.clone(), cpi_accounts)
-    }
-
-    fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
-        let cpi_accounts = SetAuthority {
-            account_or_mint: self.vault_account.to_account_info().clone(),
-            current_authority: self.vault_handler.to_account_info().clone(),
-        };
-        CpiContext::new(self.token_program.clone(), cpi_accounts)
-    }
-}
-
-impl<'info> Join<'info> {
-    fn into_transfer_to_pda_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
-        let cpi_accounts = Transfer {
-            from: self
-                .deposit_token_account
-                .to_account_info()
-                .clone(),
-            to: self.vault_handler.to_account_info().clone(),
-            authority: self.joiner.clone(),
-        };
-        CpiContext::new(self.token_program.clone(), cpi_accounts)
-    }
+    // pub fn transfer_account_ownership(&mut self, prog_id: Pubkey) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
+    //     let cpi_accounts = SetAuthority {
+    //         account_or_mint: self.match_account.to_account_info().clone(),
+    //         current_authority: self.initializer.clone().to_account_info().clone(),
+    //     };
+    //     CpiContext::new(prog_id.to_account_info().clone(), cpi_accounts)
+    // }
 }

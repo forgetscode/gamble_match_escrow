@@ -54,7 +54,7 @@ const payer = anchor.web3.Keypair.generate();
 
 // const browserWallet = Keypair.fromSecretKey(new TextEncoder().encode("2s6vWhdfE3yWZW3a3bYeXswwsyaFMRkGMEshz8BPGFMnRVnESiqNiaxNgAqX41Sf2BPdLmUzB8jv7KvScJheFsf1"))
 //
-console.log()
+// console.log()
 const idl = {
     "version": "0.0.0",
     "name": "unlucky",
@@ -365,7 +365,7 @@ const init_contract = async ({ program, tokenAccountA, mint }: InitContractArgs)
     //     },
     //     signers: [matchAccount],
     // });
-    console.log({ testaccount: escrow_account.publicKey.toString(), provider_key: provider.wallet.payer.publicKey.toString() })
+    // console.log({ testaccount: escrow_account.publicKey.toString(), provider_key: provider.wallet.payer.publicKey.toString() })
 
     // let tokenAccountPda = await mint.getAccountInfo(provider.wallet.publicKey);
     // let tokenAccountRefreshed = await mint.getAccountInfo(tokenAccountA);
@@ -414,7 +414,7 @@ const add_user = async ({ mint, program, secondUser, tokenAccountB, matchAccount
 const run_ops = async () => {
     const escrow_account = anchor.web3.Keypair.generate();
     const vault_handler = anchor.web3.Keypair.generate();
-    console.log(program)
+    // console.log(program)
     const secondUser = anchor.web3.Keypair.generate();
     // const { mint, tokenAccountA, tokenAccountB } = await test_mint(secondUser);
     const {

@@ -9,7 +9,7 @@ export const get_provider_keypair = () => {
             const splitted = line.split("=");
             const trimmed = splitted[splitted.length - 1].trim();
             const replaced = trimmed.replace(/"/g, "").replace("~", "");
-            return `${process.env.HOME}${replaced}`;
+            return !replaced.startsWith(process.env.HOME as any) ? `${process.env.HOME}${replaced}` : replaced;
         }
     }
 };
@@ -19,8 +19,11 @@ const get_address = (idl: any, address?: string, load_toml?: boolean) => {
         return address;
     } else if (load_toml) {
         const toml = fs.readFileSync(`${appRoot}/Anchor.toml`, { encoding: "utf8" });
+        let next_line = false;
         for (const line of toml.split("\n")) {
-            if (line.startsWith("gamble_match_escrow")) {
+            if (line.startsWith("[programs")) {
+                next_line = true;
+            } else if (next_line) {
                 const splitted = line.split("=");
                 const trimmed = splitted[splitted.length - 1].trim();
                 return trimmed.replace(/"/g, "");
@@ -38,8 +41,8 @@ interface LoadProgramOpts {
     address?: string
     load_toml?: boolean
 }
-export const load_program_from_idl = ({ address, load_toml }: LoadProgramOpts): anchor.Program => {
-    if (address && load_toml) {
+export const load_program_from_idl = (program?: LoadProgramOpts): anchor.Program => {
+    if (program && program.load_toml != null && program.address != null) {
         throw Error("load_program_from_idl only accepts one of address or load_toml as options!");
     }
     const target_dir = `${appRoot}/target/idl`;
@@ -50,8 +53,7 @@ export const load_program_from_idl = ({ address, load_toml }: LoadProgramOpts): 
         console.warn(`expected only one idl in target/idl but got ${fns.length}`);
     }
     const idl = JSON.parse(fs.readFileSync(`${target_dir}/${fns[0]}`, 'utf8'));
-    const resolved_address = get_address(idl, address, load_toml)
-    console.log(`Loading program: ${resolved_address}`);
+    const resolved_address = get_address(idl, program?.address, program?.load_toml);
     const programId = new anchor.web3.PublicKey(resolved_address);
     return new anchor.Program(idl, programId);
 };

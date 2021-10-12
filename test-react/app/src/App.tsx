@@ -38,7 +38,7 @@ const temp_token_account = anchor.web3.Keypair.generate();
 
 const deposit_amount = new anchor.BN(10000000000);
 
-type SolanaAccountInfo = {
+export type SolanaAccountInfo = {
   pubkey: PublicKey,
   account: solana.AccountInfo<Buffer>
 };
@@ -81,24 +81,22 @@ function App() {
   }
 
   // set constraint to make sure we take a token account that has enough tokens
-  /*
-    const user_token_accounts = (await connection.connection.getTokenAccountsByOwner(
-      provider.wallet.publicKey,
-      { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") }
-  )).value as {
-    pubkey: PublicKey;
-    account: AccountInfo<Buffer>;
-  }[];
-  const valid_user_token_accounts = user_token_accounts.filter(async user_account => {
-    const balance = await connection.connection.getTokenAccountBalance(user_account.pubkey, "confirmed");
-    const amount = (balance.value as TokenAmount).uiAmount;
-    return amount != null && amount > deposit_amount.toNumber();
-  });
-  if (valid_user_token_accounts.length <= 0) {
-    throw new Error("no valid accounts!");
-  }
-  const user_token_account = valid_user_token_accounts[0];
-  */
+  //   const user_token_accounts = (await connection.connection.getTokenAccountsByOwner(
+  //     provider.wallet.publicKey,
+  //     { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") }
+  // )).value as {
+  //   pubkey: PublicKey;
+  //   account: AccountInfo<Buffer>;
+  // }[];
+  // const valid_user_token_accounts = user_token_accounts.filter(async user_account => {
+  //   const balance = await connection.connection.getTokenAccountBalance(user_account.pubkey, "confirmed");
+  //   const amount = (balance.value as TokenAmount).uiAmount;
+  //   return amount != null && amount > deposit_amount.toNumber();
+  // });
+  // if (valid_user_token_accounts.length <= 0) {
+  //   throw new Error("no valid accounts!");
+  // }
+  // const user_token_account = valid_user_token_accounts[0];
   // make sure in smart contract that token account had enough tokens
 
 
