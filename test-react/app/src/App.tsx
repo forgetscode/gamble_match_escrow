@@ -12,6 +12,10 @@ import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import * as anchor from '@project-serum/anchor';
 import React from 'react';
 
+//mint:"BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76"
+//wallet_one:"5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH" token_account:"Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW"
+//wallet_two:"DfT3LJ75YTamopdp9grXpUv3ZrtqGfsDiJghBKn5DJbB" token_account "2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy"
+
 type IDL = {
   metadata: {
     address: string
