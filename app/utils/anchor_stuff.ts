@@ -24,7 +24,7 @@ export const account_with_sol = async (amount_sol = 10): Promise<Keypair> => {
         "confirmed"
     );
     return matchAccount;
-}
+};
 
 const new_keypair = (): Keypair =>
     anchor.web3.Keypair.generate();
