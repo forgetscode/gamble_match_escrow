@@ -1,7 +1,6 @@
 const anchor = require('@project-serum/anchor');
 const assert = require("assert");
 const { TOKEN_PROGRAM_ID, Token } = require("@solana/spl-token");
-const { Console } = require("console");
 
 class MonitorBalances {
   keypair_balances = {}
@@ -285,7 +284,7 @@ describe('unlucky', () => {
     const _info_state_two = await program.account.matchAccount.fetch(escrow_account.publicKey);
     assert.ok(!_info_state_two.gameState);
 
-    const tx4 = await program.rpc.join(deposit_amount ,{
+    const tx4 = await program.rpc.join(deposit_amount, {
       accounts:{
         joiner: second_user.publicKey,
         mint: mintA.publicKey,
@@ -397,5 +396,5 @@ describe('unlucky', () => {
     // console.log("leave signature", tx5);
     await balance_track.log_all_changes();
 
-  });
+      });
 });

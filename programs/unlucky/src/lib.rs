@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, SetAuthority, TokenAccount, Transfer, Mint};
 use spl_token::instruction::AuthorityType;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("3JJwGuyPG5yiyWz5bgTGS4VdAAvHnpwinVT8ZcYVARKB");
 
 #[program]
 pub mod unlucky {
@@ -10,7 +10,7 @@ pub mod unlucky {
     const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
     const RENT_AMOUNT: u64 = 4370880;
     pub fn initialize(ctx: Context<Initialize>, initializer_amount: u64) -> ProgramResult {
-        ctx.accounts.escrow_account.load();
+        // ctx.accounts.escrow_account.load();
 
         let (vault_authority, _vault_authority_bump) =
             Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
@@ -26,7 +26,7 @@ pub mod unlucky {
             Some(vault_authority),
         )?;
 
-        ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.initializer.key(), initializer_amount);
+        // ctx.accounts.escrow_account.add_user_to_match(ctx.accounts.initializer.to_account_info().key(), initializer_amount);
         Ok(())
     }
 
@@ -66,9 +66,11 @@ pub mod unlucky {
         Ok(())
     }
 
-    pub fn remove_user_from_match(ctx: Context<RemoveUserFromMatch>, key: Pubkey, nonce: u8 ) -> ProgramResult{
+    pub fn remove_user_from_match(ctx: Context<RemoveUserFromMatch>, key: Pubkey) -> ProgramResult{
         if ctx.accounts.escrow_account.game_state == false {
             if ctx.accounts.leaver.key() == key {
+                let (_, nonce) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
+
                 let return_balance = ctx.accounts.escrow_account.remove_user_from_match(ctx.accounts.leaver.key());
 
                 let seeds = &[&VAULT_AUTHORITY_SEED[..], &[nonce]];
@@ -102,23 +104,24 @@ pub mod unlucky {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(signer, mut)]
-    pub initializer: AccountInfo<'info>,
+    #[account(mut)]
+    pub initializer: Signer<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
-    pub initializer_deposit_token_account:Account<'info, TokenAccount>,
-    #[account(
-    init,
-    payer = initializer,
-    space = 500)]
-    pub escrow_account: Account<'info, MatchAccount>,
+    pub initializer_deposit_token_account: Account<'info, TokenAccount>,
+    // #[account(
+    //     init,
+    //     payer = initializer,
+    //     space = 500
+    // )]
+    // pub escrow_account: Account<'info, MatchAccount>,
     #[account(mut)]
     pub vault_handler: AccountInfo<'info>,
     #[account(
-    init,
-    payer = initializer,
-    token::mint = mint,
-    token::authority = vault_handler,
+        init,
+        payer = initializer,
+        token::mint = mint,
+        token::authority = vault_handler,
     )]
     pub vault_account: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
@@ -214,7 +217,7 @@ impl MatchAccount {
         let position = self.user_keys.iter().position(|&key| key == user_key).unwrap();
         self.user_keys[position] = MatchAccount::empty_key();
         let return_balance = self.user_balances[position].clone();
-        self.user_balances[position] =  0;
+        self.user_balances[position] = 0;
         return_balance
     }
 
@@ -231,7 +234,7 @@ impl<'info> Initialize<'info> {
                 .to_account_info()
                 .clone(),
             to: self.vault_account.to_account_info().clone(),
-            authority: self.initializer.clone(),
+            authority: self.initializer.to_account_info().clone(),
         };
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }
