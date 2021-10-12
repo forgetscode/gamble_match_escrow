@@ -10,6 +10,7 @@ import { Idl } from "@project-serum/anchor/src/idl";
 
 import { TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
 import * as anchor from '@project-serum/anchor';
+import React from 'react';
 
 type IDL = {
   metadata: {
@@ -18,25 +19,26 @@ type IDL = {
 } & Idl;
 const idl = IDL_JSON as IDL;
 
-const wallets = [ getPhantomWallet() ]
+const wallets = [ getPhantomWallet() ];
 
 
 const opts: ConfirmOptions = {
   preflightCommitment: "processed"
-}
+};
+
 const programID = new PublicKey(idl.metadata.address);
 
 
-const escrow_account = anchor.web3.Keypair.generate()
+const escrow_account = anchor.web3.Keypair.generate();
 
-const vault_handler = anchor.web3.Keypair.generate()
+const vault_handler = anchor.web3.Keypair.generate();
 
 const deposit_amount = new anchor.BN(10000000000);
 
 function App() {
   const [value] = useState('');
 
-  const wallet = useWallet()
+  const wallet = useWallet();
 
   async function getProvider() {
     /* create the provider and return it to the caller */
@@ -54,8 +56,7 @@ function App() {
 
   async function getMint(
       provider: Provider,
-      mintKey: string | PublicKey,
-
+      mintKey: string | PublicKey
   ) {
     const _mintKey = typeof mintKey === "string" ? new PublicKey(mintKey) : mintKey;
     const mint = new Token(
@@ -78,7 +79,7 @@ function App() {
     const program = new Program(idl, programID, provider);
 
     let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
-    let user_token_account =new PublicKey("Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW");
+    let user_token_account = new PublicKey("Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW");
 
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
@@ -89,26 +90,25 @@ function App() {
     console.log(pda.toBase58());
 
     /* interact with the program via rpc */
-    const tx = await program.rpc.initialize(deposit_amount ,{
-      accounts:{
+    const tx = await program.rpc.initialize(deposit_amount, {
+      accounts: {
         initializer: provider.wallet.publicKey,
         mint: mintA,
         initializerDepositTokenAccount: user_token_account,
         tempTokenAccount: vault_handler.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY
       },
-      signers: [vault_handler],
+      signers: [vault_handler]
     });
 
 
     console.log('initalize tx:', tx);
 
-    try{
+    try {
       console.log(provider.wallet.publicKey.toBase58());
-    }
-    catch (err){
+    } catch (err) {
       console.log("error!", err);
     }
 
@@ -121,23 +121,22 @@ function App() {
 
     let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
     let send_token_account = new PublicKey("GvoAdo9C7ii3m4ohjoPgtLG1BSnRyyr3GN2YZFZTdgQo");
-    let reciever_token_account =new PublicKey("2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy");
+    let reciever_token_account = new PublicKey("2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy");
 
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
         program.programId
     );
-
-    let pda = _pda
-
+  const t = program.rpc.transferToken;
+    // @ts-ignore
     const tx2 = await program.rpc.transferToken(deposit_amount, _nonce, {
-      accounts:{
+      accounts: {
         mint: mintA,
         initializerTempTokenAccount: send_token_account,
         recieverTokenAccount: reciever_token_account,
         tokenProgram: TOKEN_PROGRAM_ID,
-        programSigner: pda,
-      },
+        programSigner: _pda
+      }
     });
 
     console.log('initalize tx2:', tx2);
@@ -146,10 +145,10 @@ function App() {
 
   if (!wallet.connected) {
     return (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop:'100px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '100px' }}>
           <WalletMultiButton />
         </div>
-    )
+    );
   } else {
     return (
         <div className="App">
@@ -176,6 +175,6 @@ const AppWithProvider = () => (
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
-)
+);
 
 export default AppWithProvider;
