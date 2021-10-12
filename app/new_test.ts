@@ -35,7 +35,7 @@ const make_mint = async (): Promise<NewMint> => {
 
 const create_new_match = async () => {
     const matchAccount = SavableKeypair.getOrCreateKp("./match_key_idl.json", true);
-    await add_match_row(matchAccount);
+    // await add_match_row(matchAccount);
     await init_match(matchAccount);
     return matchAccount;
 };
@@ -61,11 +61,41 @@ const get_user_token_accs = async (mint_pub_key: PublicKey, user_wallet: NodeWal
     return user_token_account;
 };
 
-const make_temp_token_accs = async (
-    mint: NewMint,
-    matchAccount: SavableKeypair,
-    userAccounts: UserMade[]
+
+const init_match = async (
+    matchAccount: SavableKeypair
 ) => {
+    const [pda, _bump] = await anchor.web3.PublicKey.findProgramAddress(
+        [matchAccount.publicKey.toBuffer()],
+        program.programId
+    );
+    const tx3 = await program.rpc.initMatch(_bump, {
+        accounts: {
+            initializer: provider.wallet.publicKey,
+            authority: matchAccount.publicKey,
+            matchAccount: pda,
+            // matchAccountId: matchAccountId.publicKey,
+            systemProgram: SystemProgram.programId
+            // rent: anchor.web3.SYSVAR_RENT_PUBKEY
+        },
+        signers: [ provider.wallet.payer, matchAccount ]
+    });
+    console.log(`init_match txhash: ${tx3}`);
+};
+
+const new_user_wallet = (user_num: number) => {
+    const simulatedKeyPair = SavableKeypair.getOrCreateKp(`./data_cache/simulated_key_pair_idl_${user_num}.json`, true);
+    return new NodeWallet(simulatedKeyPair.kp);
+};
+
+
+interface UserMade {
+    user: NodeWallet,
+    from_token_account: PublicKey,
+    to_temp_token_account: PublicKey
+}
+
+const make_temp_token_accs = async (mint: NewMint, matchAccount: SavableKeypair, userAccounts: UserMade[]) => {
     const [pda, _] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("test-seed"))],
         program.programId
@@ -105,7 +135,7 @@ const make_temp_token_accs = async (
         provider.wallet.payer,
         ...userAccounts.map(acc => acc.user.payer)
     ];
-    console.log(`txhash: ${await provider.connection.sendTransaction(tx, signers)}`);
+    console.log(`transfer & auth txhash: ${await provider.connection.sendTransaction(tx, signers)}`);
 
     // const owners = userAccounts.map(acc => acc.user.publicKey);
     // const matchAccountId = anchor_util.new_keypair();
@@ -188,39 +218,6 @@ const make_temp_token_accs = async (
     //     ]
     // });
 };
-
-const init_match = async (
-    matchAccount: SavableKeypair
-) => {
-    const [pda, _bump] = await anchor.web3.PublicKey.findProgramAddress(
-        [matchAccount.publicKey.toBuffer()],
-        program.programId
-    );
-    const tx3 = await program.rpc.initMatch(_bump, {
-        accounts: {
-            initializer: provider.wallet.publicKey,
-            authority: matchAccount.publicKey,
-            matchAccount: pda,
-            // matchAccountId: matchAccountId.publicKey,
-            systemProgram: SystemProgram.programId,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY
-        },
-        signers: [ provider.wallet.payer, matchAccount ]
-    });
-    console.log(`txhash2: ${tx3}`);
-};
-
-const new_user_wallet = (user_num: number) => {
-    const simulatedKeyPair = SavableKeypair.getOrCreateKp(`./data_cache/simulated_key_pair_idl_${user_num}.json`, true);
-    return new NodeWallet(simulatedKeyPair.kp);
-};
-
-
-interface UserMade {
-    user: NodeWallet,
-    from_token_account: PublicKey,
-    to_temp_token_account: PublicKey
-}
 
 const user_requests_new_match = async () => {
     const matchAccount = await create_new_match();

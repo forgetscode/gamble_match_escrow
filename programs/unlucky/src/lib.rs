@@ -8,32 +8,9 @@ declare_id!("2NG4CobL3ZSBgCkfu3p9L3stuuoTMWTkmSMHrmdrZCcN");
 
 #[program]
 pub mod unlucky {
-    use spl_token::instruction::AuthorityType;
     use super::*;
     const VAULT_AUTHORITY_SEED: &[u8] = b"test-seed";
     const RENT_AMOUNT: u64 = 4370880;
-    // Initializes a new multisig account with a set of owners and a threshold.
-    // pub fn create_multisig(
-    //     ctx: Context<CreateMultisig>,
-    //     owners: Vec<Pubkey>,
-    //     threshold: u64,
-    //     nonce: u8,
-    // ) -> ProgramResult {
-    //     let multisig = &mut ctx.accounts.multisig;
-    //     let mut i = 0;
-    //     let multisig_length = multisig.signers.len();
-    //     for owner in &owners {
-    //         if i >= multisig_length {
-    //             break;
-    //         }
-    //         multisig.signers[i] = owner.clone();
-    //         i += 1;
-    //     }
-    //     // multisig.owners = owners;
-    //     // multisig.threshold = threshold;
-    //     // multisig.nonce = nonce;
-    //     Ok(())
-    // }
     pub fn init_match(ctx: Context<Initialize>, bump: u8) -> ProgramResult {
         ctx.accounts.match_account.bump = bump;
         ctx.accounts.match_account.authority = *ctx.accounts.authority.key;
@@ -65,9 +42,7 @@ pub struct Initialize<'info> {
         space = std::mem::size_of::<MatchAccount>() + 8
     )]
     pub match_account: Account<'info, MatchAccount>,
-    pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
-    // pub token_program: AccountInfo<'info>,
+    pub system_program: Program<'info, System>
 }
 
 #[account]
