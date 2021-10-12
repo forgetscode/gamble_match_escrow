@@ -52,48 +52,6 @@ function App() {
 
 
 
-  //mintA = "BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76";
-  //user_token_account = "Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW";
-
-
-  async function set_up() {
-
-    const provider = await getProvider();
-    /* create the program interface combining the idl, program ID, and provider */
-    const program = new Program(idl, programID, provider);
-
-
-    /*
-    try{
-      await provider.connection.confirmTransaction(
-        await provider.connection.requestAirdrop(token_minter.publicKey, 10000000000),
-        'confirmed airdrop'
-      );
-    }
-    catch(err){
-      console.log("failure to airdrop to token minter", err);
-    }
-
-
-    mintA = await Token.createMint(
-      provider.connection,
-      token_minter,
-      token_minter.publicKey,
-      null,
-      0,
-      TOKEN_PROGRAM_ID
-    );
-
-    user_token_account = await mintA.createAccount(provider.wallet.publicKey);
-
-    await mintA.mintTo(
-      user_token_account,
-      token_minter.publicKey,
-      [token_minter],
-      initializerAmount
-    );
-      */
-  }
   async function getMint(
       provider: Provider,
       mintKey: string | PublicKey,
@@ -195,11 +153,6 @@ function App() {
   } else {
     return (
         <div className="App">
-          <div>
-            {
-              !value && (<button onClick={set_up}>Set Up</button>)
-            }
-          </div>
           <div>
             {
               !value && (<button onClick={initialize}>Initialize</button>)
