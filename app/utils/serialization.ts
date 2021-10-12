@@ -1,6 +1,6 @@
 
 import { Keypair, PublicKey, Signer } from "@solana/web3.js";
-import { SavableKeypair } from "./saved_keypair";
+import { CachedKeypair } from "../anchor_api_wrap/cached_keypair";
 
 
 // export const makeKeypairSerializable = (kp: Keypair) => ({
@@ -8,6 +8,6 @@ import { SavableKeypair } from "./saved_keypair";
 //     secretKey: kp.secretKey
 // });
 
-export const serialize_keypair = (kp: Keypair | SavableKeypair) => Buffer.from(kp.secretKey).toString("base64");
-export const deserialize_keypair = (base64: string) => SavableKeypair.fromSecretKey(Uint8Array.from(Buffer.from(base64, "base64")));
+export const serialize_keypair = (kp: Keypair | CachedKeypair) => Buffer.from(kp.secretKey).toString("base64");
+export const deserialize_keypair = (base64: string) => CachedKeypair.fromSecretKey(Uint8Array.from(Buffer.from(base64, "base64")));
 

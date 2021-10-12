@@ -3,40 +3,40 @@ import { Provider } from "@project-serum/anchor";
 import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
-import { deserialize_keypair, serialize_keypair } from "./serialization";
-import { SavableKeypair } from "./saved_keypair";
+import { deserialize_keypair, serialize_keypair } from "../utils/serialization";
+import { CachedKeypair } from "./cached_keypair";
 
-let instance: NewMint;
-export class NewMint {
+let instance: CachedMint;
+export class CachedMint {
     mint: Token;
-    payer: SavableKeypair;
-    mintAuthority: SavableKeypair;
+    payer: CachedKeypair;
+    mintAuthority: CachedKeypair;
 
     constructor(
         mint: Token,
-        payer: SavableKeypair,
-        mintAuthority: SavableKeypair
+        payer: CachedKeypair,
+        mintAuthority: CachedKeypair
     ) {
         this.mint = mint;
         this.payer = payer;
         this.mintAuthority = mintAuthority;
     }
 
-    static getOrCreateMint = async (provider: Provider, path: string, make_new = false) => {
+    static getOrCreateMint = async (provider: Provider, path: string = "./data_cache/mint_idl.json", make_new = false) => {
         if (instance != null) {
             return instance;
         } else if (make_new || !fs.existsSync(path)) {
-            const new_mint = await NewMint.newMint(provider);
+            const new_mint = await CachedMint.newMint(provider);
             new_mint.saveMint(path);
             instance = new_mint;
             return new_mint;
         }
-        const new_mint = NewMint.loadMint(path, provider);
+        const new_mint = CachedMint.loadMint(path, provider);
         instance = new_mint;
         return new_mint;
     }
 
-    static newMint = async (provider: Provider): Promise<NewMint> => {
+    static newMint = async (provider: Provider): Promise<CachedMint> => {
         // const payer = anchor.web3.Keypair.generate();
         // @ts-ignore
         // const mintAuthority = provider.wallet.payer;
@@ -49,10 +49,10 @@ export class NewMint {
             0,
             TOKEN_PROGRAM_ID
         );
-        return new NewMint(
+        return new CachedMint(
             mint,
-            SavableKeypair.fromSecretKey(provider.wallet.payer.secretKey),
-            SavableKeypair.fromSecretKey(provider.wallet.payer.secretKey)
+            CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey),
+            CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey)
         );
     }
 
@@ -64,7 +64,7 @@ export class NewMint {
             throw new Error("you must initialize the mint first!");
         }
         const pubKey = typeof accountPubkey === "string" ? new PublicKey(accountPubkey) : accountPubkey;
-        const info = await this.mint.getMintInfo();
+        // const info = await this.mint.getMintInfo();
         const tokenAccountA: PublicKey = await this.mint.createAccount(pubKey);
         await this.mint.mintTo(
             tokenAccountA,
@@ -91,7 +91,7 @@ export class NewMint {
         const payer = deserialize_keypair(data.payer);
         const mintAuthority = deserialize_keypair(data.mintAuthority);
         const mint = new Token(provider.connection, new PublicKey(data.mint), TOKEN_PROGRAM_ID, payer);
-        return new NewMint(
+        return new CachedMint(
             mint,
             payer,
             mintAuthority

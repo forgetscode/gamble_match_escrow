@@ -1,6 +1,6 @@
 import DB from "sqlite-async";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { SavableKeypair } from "./utils/saved_keypair";
+import { CachedKeypair } from "./anchor_api_wrap/cached_keypair";
 // export const db = new sqlite3.Database('sqlite.db');
 
 const get_conn = async () =>
@@ -27,10 +27,10 @@ export const create_tables = async (exit = true) => {
     }
 };
 
-const is_savable_keypair = (keypair: Keypair | SavableKeypair): keypair is SavableKeypair =>
+const is_savable_keypair = (keypair: Keypair | CachedKeypair): keypair is CachedKeypair =>
     (keypair as any)["kp"] != null;
 
-export async function add_match_row(keypair: Keypair | SavableKeypair) {
+export async function add_match_row(keypair: Keypair | CachedKeypair) {
     const { pubKey, secKey } = {
         pubKey: keypair.publicKey,
         secKey: keypair.secretKey

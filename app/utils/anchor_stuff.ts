@@ -2,6 +2,8 @@ import {Provider, Wallet} from "@project-serum/anchor";
 import { PublicKey, Keypair } from "@solana/web3.js";
 // import {provider} from "../some_test2";
 import * as anchor from "@project-serum/anchor";
+import { Buffer } from "buffer";
+import { BetterPDA } from "../anchor_api_wrap/better_pda";
 
 export type WithPublicKey = PublicKey | Provider | Wallet | Keypair;
 
@@ -29,12 +31,12 @@ export const account_with_sol = async (amount_sol = 10): Promise<Keypair> => {
 const new_keypair = (): Keypair =>
     anchor.web3.Keypair.generate();
 
-
 let provider: Provider = null as unknown as Provider;
 export const anchor_util = {
     setProvider(_provider: Provider) {
         provider = _provider;
     },
-    new_keypair
+    new_keypair,
+    get_pda: BetterPDA.new_pda
 };
 

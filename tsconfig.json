@@ -28,9 +28,9 @@
     ],
     "outDir": "./prod/"
   },
-  "compileOnSave": false,
+  "compileOnSave": true,
   "include": [
-    "src/index.ts"
+    "app/new_test.ts"
   ],
   "exclude": [
     "node_modules",

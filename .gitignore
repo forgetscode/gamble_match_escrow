@@ -7,3 +7,9 @@ node_modules
 Anchor.toml
 /test-ledger/
 /test-react/.idea
+/prod/
+/push/
+/data_cache/
+splite.db
+sqlite.db
+saved.txt
