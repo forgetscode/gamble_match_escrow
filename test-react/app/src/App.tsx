@@ -7,6 +7,7 @@ import { getPhantomWallet } from '@solana/wallet-adapter-wallets';
 import { ConnectionProvider, useWallet, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { Idl } from "@project-serum/anchor/src/idl";
+import * as solana from "@solana/web3.js";
 
 import { TOKEN_PROGRAM_ID, Token, AccountInfo } from "@solana/spl-token";
 import * as anchor from '@project-serum/anchor';
@@ -33,14 +34,19 @@ const opts: ConfirmOptions = {
 const programID = new PublicKey(idl.metadata.address);
 
 
-const escrow_account = anchor.web3.Keypair.generate();
-
-const vault_handler = anchor.web3.Keypair.generate();
+const temp_token_account = anchor.web3.Keypair.generate();
 
 const deposit_amount = new anchor.BN(10000000000);
 
+type SolanaAccountInfo = {
+  pubkey: PublicKey,
+  account: solana.AccountInfo<Buffer>
+};
+
 function App() {
   const [value] = useState('');
+
+  const [initialized_temp_token, set_initialized_temp_token] = useState<SolanaAccountInfo>();
 
   const wallet = useWallet();
 
@@ -56,34 +62,60 @@ function App() {
     );
   }
 
+    
+  async function getMint(){
 
 
-  async function getMint(
-      provider: Provider,
-      mintKey: string | PublicKey
-  ): Promise<[ Token, AccountInfo ]> {
-    const _mintKey = typeof mintKey === "string" ? new PublicKey(mintKey) : mintKey;
-    const mint = new Token(
-        provider.connection,
-        _mintKey,
-        TOKEN_PROGRAM_ID,
-        provider as any
-    );
-    const userTokenAccount = await mint.getAccountInfo(provider.wallet.publicKey);
-    return [
-        mint,
-        userTokenAccount
-    ];
+    const provider = await getProvider();
+    /* create the program interface combining the idl, program ID, and provider */
+    const program = new Program(idl, programID, provider);
+
+    const userTokenAccount = await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") });
+
+    console.log(userTokenAccount);
+
+    console.log(userTokenAccount.value as {
+      pubkey: PublicKey;
+      account: solana.AccountInfo<Buffer>;
+    }[])
   }
+
+  //set constraint to make sure we take a token account that has enough tokens
+  /*
+    const user_token_accounts = (await connection.connection.getTokenAccountsByOwner(
+      provider.wallet.publicKey,
+      { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") }
+  )).value as {
+    pubkey: PublicKey;
+    account: AccountInfo<Buffer>;
+  }[];
+  const valid_user_token_accounts = user_token_accounts.filter(async user_account => {
+    const balance = await connection.connection.getTokenAccountBalance(user_account.pubkey, "confirmed");
+    const amount = (balance.value as TokenAmount).uiAmount;
+    return amount != null && amount > deposit_amount.toNumber();
+  });
+  if (valid_user_token_accounts.length <= 0) {
+    throw new Error("no valid accounts!");
+  }
+  const user_token_account = valid_user_token_accounts[0];
+  */
+  //make sure in smart contract that token account had enough tokens
+
 
   async function initialize() {
 
     const provider = await getProvider();
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
-    const [ mint, user_token_account ] = await getMint(provider, "BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
+    //const [ mint, user_token_account ] = await getMint(provider, "BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
     // let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
     // let user_token_account = new PublicKey("Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW");
+
+
+    const userTokenAccount = await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") });
+
+    console.log(userTokenAccount.value[0].pubkey);
+
 
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
@@ -94,21 +126,28 @@ function App() {
     console.log(pda.toBase58());
 
     /* interact with the program via rpc */
+    
+    let mint = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
+
     const tx = await program.rpc.initialize(deposit_amount, {
       accounts: {
         initializer: provider.wallet.publicKey,
-        mint: mint.publicKey,
-        initializerDepositTokenAccount: user_token_account.address,
-        tempTokenAccount: vault_handler.publicKey,
+        mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76"),
+        initializerDepositTokenAccount: userTokenAccount.value[0].pubkey,
+        tempTokenAccount: temp_token_account.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY
       },
-      signers: [vault_handler]
+      signers: [temp_token_account],
     });
 
 
-    console.log('initalize tx:', tx);
+    set_initialized_temp_token(userTokenAccount.value[0]);
+
+    console.log(initialized_temp_token);
+    
+    //console.log('initalize tx:', tx);
 
     try {
       console.log(provider.wallet.publicKey.toBase58());
@@ -124,19 +163,23 @@ function App() {
     const program = new Program(idl, programID, provider);
 
     let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
-    let send_token_account = new PublicKey("GvoAdo9C7ii3m4ohjoPgtLG1BSnRyyr3GN2YZFZTdgQo");
+    let send_token_account = initialized_temp_token;
     let reciever_token_account = new PublicKey("2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy");
+
+    console.log(initialized_temp_token);
+
 
     const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
         program.programId
     );
+    
   const t = program.rpc.transferToken;
     // @ts-ignore
     const tx2 = await program.rpc.transferToken(deposit_amount, _nonce, {
       accounts: {
         mint: mintA,
-        initializerTempTokenAccount: send_token_account,
+        initializerTempTokenAccount: send_token_account?.pubkey,
         recieverTokenAccount: reciever_token_account,
         tokenProgram: TOKEN_PROGRAM_ID,
         programSigner: _pda
