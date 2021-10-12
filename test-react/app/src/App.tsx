@@ -62,8 +62,8 @@ function App() {
     );
   }
 
-    
-  async function getMint(){
+
+  async function getMint() {
 
 
     const provider = await getProvider();
@@ -77,10 +77,10 @@ function App() {
     console.log(userTokenAccount.value as {
       pubkey: PublicKey;
       account: solana.AccountInfo<Buffer>;
-    }[])
+    }[]);
   }
 
-  //set constraint to make sure we take a token account that has enough tokens
+  // set constraint to make sure we take a token account that has enough tokens
   /*
     const user_token_accounts = (await connection.connection.getTokenAccountsByOwner(
       provider.wallet.publicKey,
@@ -99,7 +99,7 @@ function App() {
   }
   const user_token_account = valid_user_token_accounts[0];
   */
-  //make sure in smart contract that token account had enough tokens
+  // make sure in smart contract that token account had enough tokens
 
 
   async function initialize() {
@@ -107,7 +107,7 @@ function App() {
     const provider = await getProvider();
     /* create the program interface combining the idl, program ID, and provider */
     const program = new Program(idl, programID, provider);
-    //const [ mint, user_token_account ] = await getMint(provider, "BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
+    // const [ mint, user_token_account ] = await getMint(provider, "BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
     // let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
     // let user_token_account = new PublicKey("Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW");
 
@@ -126,7 +126,7 @@ function App() {
     console.log(pda.toBase58());
 
     /* interact with the program via rpc */
-    
+
     let mint = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
 
     const tx = await program.rpc.initialize(deposit_amount, {
@@ -139,15 +139,15 @@ function App() {
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: anchor.web3.SYSVAR_RENT_PUBKEY
       },
-      signers: [temp_token_account],
+      signers: [temp_token_account]
     });
 
 
     set_initialized_temp_token(userTokenAccount.value[0]);
 
     console.log(initialized_temp_token);
-    
-    //console.log('initalize tx:', tx);
+
+    // console.log('initalize tx:', tx);
 
     try {
       console.log(provider.wallet.publicKey.toBase58());
@@ -173,7 +173,7 @@ function App() {
         [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
         program.programId
     );
-    
+
   const t = program.rpc.transferToken;
     // @ts-ignore
     const tx2 = await program.rpc.transferToken(deposit_amount, _nonce, {
