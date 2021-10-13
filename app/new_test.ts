@@ -125,11 +125,11 @@ const init_match = async (mint: CachedMint, matchAccount: CachedKeypair, users: 
             systemProgram: SystemProgram.programId
         },
         signers: [ provider.wallet.payer, matchAccount ],
-        remainingAccounts: users.map(acc => ({ pubkey: acc.user.publicKey, isWritable: false, isSigner: false }))
+        // remainingAccounts: users.map(acc => ({ pubkey: acc.user.publicKey, isWritable: false, isSigner: false }))
     });
     await new Promise(r => setTimeout(r, 1000));
     const test = await program.account.matchAccount.fetch(match_pda.pdaPubKey);
-    console.log(`init_match txhash: ${test}`);
+    console.log(`init_match txhash: ${tx3}`);
 };
 
 
@@ -137,7 +137,7 @@ const user_requests_new_match = async () => {
     const matchAccount = await create_new_match();
     const mint = await make_mint();
     let users: UserMade[] = [];
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
         const user = new_user_wallet(i + 1);
         const user_token_acc = await make_token_account(mint, user, 2000);
         const temp_user_account = await make_token_account(mint, user, 0);
