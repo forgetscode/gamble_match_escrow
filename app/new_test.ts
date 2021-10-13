@@ -147,7 +147,7 @@ const user_requests_new_match = async () => {
             to_temp_token_account: temp_user_account
         });
     }
-    const match_pda = await BetterPDA.new_pda(matchAccount.publicKey.toBuffer(), program.programId);
+    const match_pda = await BetterPDA.new_pda(matchAccount.publicKey, program.programId);
 
     await make_temp_token_accs(mint, matchAccount, users, match_pda);
     await init_match(mint, matchAccount, users, match_pda);

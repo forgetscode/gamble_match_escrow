@@ -11,9 +11,13 @@ export class BetterPDA {
         this._pdaPubKey = pda_key;
         this.programId = programId;
     }
-    static async new_pda(seeds: Uint8Array, programId: PublicKey): Promise<BetterPDA> {
+
+    /**     const match_pda = await BetterPDA.new_pda(matchAccount.publicKey, program.programId);
+     */
+    static async new_pda(seeds: Uint8Array | PublicKey, programId: PublicKey): Promise<BetterPDA> {
+        const _seeds = seeds instanceof PublicKey ? seeds.toBuffer() : seeds;
         const [ key, bump ] = await anchor.web3.PublicKey.findProgramAddress(
-            [seeds],
+            [_seeds.slice(0, 32)],
             programId
         );
         return new BetterPDA(key, bump, programId);
@@ -24,10 +28,11 @@ export class BetterPDA {
     get bump() {
         return this._bump;
     }
-    async get_second_order_pda(seeds: string): Promise<PublicKey> {
+    async get_second_order_pda(seeds: string | PublicKey): Promise<PublicKey> {
+        const _seeds = seeds instanceof PublicKey ? seeds.toString() : seeds;
         const newAuth = await anchor.web3.PublicKey.createWithSeed(
             this.pdaPubKey,
-            seeds.slice(0, 32),
+            _seeds.slice(0, 32),
             this.programId
         );
         this.children.push(newAuth);
