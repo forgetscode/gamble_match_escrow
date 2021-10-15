@@ -86,7 +86,7 @@ interface UserMade {
 const make_temp_token_accs = async (mint: CachedMint, matchAccount: CachedKeypair, users: UserMade[], match_pda: BetterPDA) => {
     let tx = new Transaction();
     for (const acc of users) {
-        const child_pda = await match_pda.get_second_order_pda(acc.user.publicKey.toString());
+        const child_pda = await match_pda.get_second_order_pda(acc.user.publicKey);
         tx.add(
             Token.createTransferInstruction(
                 TOKEN_PROGRAM_ID, // always token program address
