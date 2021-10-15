@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, SetAuthority, TokenAccount, Transfer, Mint};
+use anchor_spl::token::{self, Mint, SetAuthority, TokenAccount, Transfer};
 use spl_token::instruction::AuthorityType;
 
 declare_id!("3JJwGuyPG5yiyWz5bgTGS4VdAAvHnpwinVT8ZcYVARKB");
@@ -7,8 +7,10 @@ declare_id!("3JJwGuyPG5yiyWz5bgTGS4VdAAvHnpwinVT8ZcYVARKB");
 #[program]
 pub mod unlucky {
     use super::*;
+
     const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
     const RENT_AMOUNT: u64 = 4370880;
+
     pub fn initialize(ctx: Context<Initialize>, initializer_amount: u64) -> ProgramResult {
         // ctx.accounts.escrow_account.load();
 
@@ -49,19 +51,18 @@ pub mod unlucky {
             )?;
 
             Ok(())
-        }
-        else{
+        } else {
             msg!("The game has reached maximum amount of users and is starting, please create a new lobby.");
             Ok(())
         }
     }
 
-    pub fn change_state(ctx: Context<ChangeState>) -> ProgramResult{
+    pub fn change_state(ctx: Context<ChangeState>) -> ProgramResult {
         ctx.accounts.escrow_account.change_state();
         Ok(())
     }
 
-    pub fn remove_user_from_match(ctx: Context<RemoveUserFromMatch>, key: Pubkey) -> ProgramResult{
+    pub fn remove_user_from_match(ctx: Context<RemoveUserFromMatch>, key: Pubkey) -> ProgramResult {
         if ctx.accounts.escrow_account.game_state == false {
             if ctx.accounts.leaver.key() == key {
                 let (_, nonce) = Pubkey::find_program_address(&[VAULT_AUTHORITY_SEED], ctx.program_id);
@@ -82,15 +83,13 @@ pub mod unlucky {
                 };
 
                 let cpi_ctx = CpiContext::new_with_signer(ctx.accounts.token_program.clone(), cpi_accounts, signer);
-                token::transfer(cpi_ctx ,return_balance)?;
+                token::transfer(cpi_ctx, return_balance)?;
                 Ok(())
-            }
-            else{
+            } else {
                 msg!("Key was not found in match");
                 Ok(())
             }
-        }
-        else{
+        } else {
             msg!("You cannot leave the lobby as the game is starting.");
             Ok(())
         }
@@ -113,10 +112,10 @@ pub struct Initialize<'info> {
     #[account(mut)]
     pub vault_handler: AccountInfo<'info>,
     #[account(
-        init,
-        payer = initializer,
-        token::mint = mint,
-        token::authority = vault_handler,
+    init,
+    payer = initializer,
+    token::mint = mint,
+    token::authority = vault_handler,
     )]
     pub vault_account: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
@@ -130,7 +129,7 @@ pub struct Join<'info> {
     pub joiner: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
-    pub deposit_token_account:Account<'info, TokenAccount>,
+    pub deposit_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub escrow_account: Account<'info, MatchAccount>,
     #[account(mut)]
@@ -140,18 +139,18 @@ pub struct Join<'info> {
 }
 
 #[derive(Accounts)]
-pub struct ChangeState<'info>{
+pub struct ChangeState<'info> {
     #[account(mut)]
     pub escrow_account: Account<'info, MatchAccount>,
 }
 
 #[derive(Accounts)]
-pub struct RemoveUserFromMatch<'info>{
+pub struct RemoveUserFromMatch<'info> {
     #[account(signer, mut)]
     pub leaver: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
-    pub leaver_token_account:Account<'info, TokenAccount>,
+    pub leaver_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
     pub escrow_account: Account<'info, MatchAccount>,
     #[account(mut)]
@@ -165,11 +164,10 @@ pub struct RemoveUserFromMatch<'info>{
 pub struct MatchAccount {
     pub game_state: bool,
     pub user_balances: [u64; 8],
-    pub user_keys: [Pubkey; 8]
+    pub user_keys: [Pubkey; 8],
 }
 
 impl MatchAccount {
-
     fn empty_key() -> Pubkey {
         Pubkey::new_from_array([0u8; 32])
     }
@@ -201,14 +199,14 @@ impl MatchAccount {
             Some(empty_idx) => {
                 self.user_keys[empty_idx] = user_key;
                 self.user_balances[empty_idx] = user_bal;
-            },
+            }
             None => {
                 self.game_state = true;
             }
         }
     }
 
-    pub fn remove_user_from_match(&mut self, user_key: Pubkey) -> u64{
+    pub fn remove_user_from_match(&mut self, user_key: Pubkey) -> u64 {
         let position = self.user_keys.iter().position(|&key| key == user_key).unwrap();
         self.user_keys[position] = MatchAccount::empty_key();
         let return_balance = self.user_balances[position].clone();
@@ -216,7 +214,7 @@ impl MatchAccount {
         return_balance
     }
 
-    pub fn change_state(&mut self){
+    pub fn change_state(&mut self) {
         self.game_state = !self.game_state;
     }
 }

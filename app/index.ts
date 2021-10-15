@@ -41,7 +41,7 @@ const get_token_program = async () => {
             // instructions: [
             //     await program.account.initializerFeeAccount.createInstruction(initializerFeeAccount),
             // ],
-            signers: [matchAccount],
+            signers: [ matchAccount ],
         }
     );
     console.log({ testAcc });

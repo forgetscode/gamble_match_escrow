@@ -1,15 +1,15 @@
 import {
+    Commitment,
+    ConfirmOptions,
     Connection,
     Keypair,
-    Signer,
     PublicKey,
+    RpcResponseAndContext,
+    sendAndConfirmRawTransaction,
+    Signer,
+    SimulatedTransactionResponse,
     Transaction,
     TransactionSignature,
-    ConfirmOptions,
-    sendAndConfirmRawTransaction,
-    RpcResponseAndContext,
-    SimulatedTransactionResponse,
-    Commitment,
 } from "@solana/web3.js";
 
 export const isBrowser =
@@ -29,7 +29,8 @@ export default class Provider {
         readonly connection: Connection,
         readonly wallet: Wallet,
         readonly opts: ConfirmOptions
-    ) {}
+    ) {
+    }
 
     static defaultOptions(): ConfirmOptions {
         return {
@@ -219,16 +220,23 @@ export type SendTxRequest = {
  * Wallet interface for objects that can be used to sign provider transactions.
  */
 export interface Wallet {
-    signTransaction(tx: Transaction): Promise<Transaction>;
-    signAllTransactions(txs: Transaction[]): Promise<Transaction[]>;
     publicKey: PublicKey;
+
+    signTransaction(tx: Transaction): Promise<Transaction>;
+
+    signAllTransactions(txs: Transaction[]): Promise<Transaction[]>;
 }
 
 /**
  * Node only wallet.
  */
 export class NodeWallet implements Wallet {
-    constructor(readonly payer: Keypair) {}
+    constructor(readonly payer: Keypair) {
+    }
+
+    get publicKey(): PublicKey {
+        return this.payer.publicKey;
+    }
 
     static local(): NodeWallet {
         const process = require("process");
@@ -256,10 +264,6 @@ export class NodeWallet implements Wallet {
             return t;
         });
     }
-
-    get publicKey(): PublicKey {
-        return this.payer.publicKey;
-    }
 }
 
 // Copy of Connection.simulateTransaction that takes a commitment parameter.
@@ -279,7 +283,7 @@ async function simulateTransaction(
     const wireTransaction = transaction._serialize(signData);
     const encodedTransaction = wireTransaction.toString("base64");
     const config: any = { encoding: "base64", commitment };
-    const args = [encodedTransaction, config];
+    const args = [ encodedTransaction, config ];
 
     // @ts-ignore
     const res = await connection._rpcRequest("simulateTransaction", args);

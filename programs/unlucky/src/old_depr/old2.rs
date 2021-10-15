@@ -1,4 +1,3 @@
-
 fn as_u32_le(array: &[u8; 32]) -> u32 {
     let mut sum = 0;
     let num_segments = array.len() / 4;
@@ -11,7 +10,7 @@ fn as_u32_le(array: &[u8; 32]) -> u32 {
 pub fn compute_user_derived_hash(
     pda_key: &Pubkey,
     program_id: &Pubkey,
-    remaining_accounts: &[AccountInfo]
+    remaining_accounts: &[AccountInfo],
 ) -> Result<Pubkey, ProgramError> {
     let ordered_user_der_keys = try_get_ordered_user_der_keys(pda_key, program_id, remaining_accounts)?;
     msg!("ordered_user_der_keys len: {}", ordered_user_der_keys.len());
@@ -26,7 +25,7 @@ pub fn compute_user_derived_hash(
             let new_der_key = Pubkey::create_with_seed(
                 &derived_key.unwrap(),
                 seeds,
-                program_id
+                program_id,
             )?;
             msg!("{}", new_der_key.key());
             derived_key = Some(new_der_key);
@@ -38,7 +37,7 @@ pub fn compute_user_derived_hash(
 pub fn try_get_ordered_user_der_keys(
     pda_key: &Pubkey,
     program_id: &Pubkey,
-    remaining_accounts: &[AccountInfo]
+    remaining_accounts: &[AccountInfo],
 ) -> Result<Vec<Pubkey>, ProgramError> {
     let mut user_derived_pds: BinaryHeap<sized_key::SizedKey> = BinaryHeap::new();
     for remaining_account in remaining_accounts {
@@ -47,7 +46,7 @@ pub fn try_get_ordered_user_der_keys(
         let child_pda = Pubkey::create_with_seed(
             pda_key,
             seeds,
-            program_id
+            program_id,
         )?;
         let hash_pos = as_u32_le(&child_pda.to_bytes());
         user_derived_pds.push(sized_key::SizedKey { hash_pos, pub_key: child_pda });

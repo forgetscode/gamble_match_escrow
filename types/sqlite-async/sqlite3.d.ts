@@ -79,6 +79,7 @@ export class Database extends events.EventEmitter {
     prepare(sql: string, ...params: any[]): Statement;
 
     serialize(callback?: () => void): void;
+
     parallelize(callback?: () => void): void;
 
     on(event: "trace", listener: (sql: string) => void): this;
@@ -88,6 +89,7 @@ export class Database extends events.EventEmitter {
     on(event: string, listener: (...args: any[]) => void): this;
 
     configure(option: "busyTimeout", value: number): void;
+
     interrupt(): void;
 }
 
@@ -104,5 +106,6 @@ export interface sqlite3 {
     RunResult: RunResult;
     Statement: typeof Statement;
     Database: typeof Database;
+
     verbose(): this;
 }

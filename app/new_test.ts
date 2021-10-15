@@ -72,7 +72,7 @@ const get_user_token_accs = async (mint_pub_key: PublicKey, user_wallet: NodeWal
 
 
 const new_user_wallet = (user_num: number) => {
-    const simulatedKeyPair = CachedKeypair.getOrCreateKp(`./data_cache/simulated_key_pair_idl_${user_num}.json`, remake_all_vals);
+    const simulatedKeyPair = CachedKeypair.getOrCreateKp(`./data_cache/simulated_key_pair_idl_${ user_num }.json`, remake_all_vals);
     return new NodeWallet(simulatedKeyPair.kp);
 };
 
@@ -104,7 +104,7 @@ const make_temp_token_accs = async (mint: CachedMint, matchAccount: CachedKeypai
                 child_pda,
                 "AccountOwner",
                 acc.user.publicKey,
-                [acc.user.payer]
+                [ acc.user.payer ]
             )
         );
     }
@@ -113,7 +113,7 @@ const make_temp_token_accs = async (mint: CachedMint, matchAccount: CachedKeypai
         provider.wallet.payer,
         ...users.map(acc => acc.user.payer)
     ];
-    console.log(`transfer & auth txhash: ${await provider.connection.sendTransaction(tx, signers)}`);
+    console.log(`transfer & auth txhash: ${ await provider.connection.sendTransaction(tx, signers) }`);
 };
 
 const init_match = async (mint: CachedMint, matchAccount: CachedKeypair, users: UserMade[], match_pda: BetterPDA) => {
@@ -129,7 +129,7 @@ const init_match = async (mint: CachedMint, matchAccount: CachedKeypair, users: 
     });
     await new Promise(r => setTimeout(r, 1000));
     const test = await program.account.matchAccount.fetch(match_pda.pdaPubKey);
-    console.log(`init_match txhash: ${tx3}`);
+    console.log(`init_match txhash: ${ tx3 }`);
 };
 
 
@@ -156,7 +156,6 @@ const user_requests_new_match = async () => {
 const do_stuff = async () => {
     await user_requests_new_match();
 };
-
 
 
 if (require.main === module) {

@@ -1,14 +1,9 @@
-import {AccountInfo, Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
+import { AccountInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
 import promise_then_catch from "promise-then-catch/lib";
-import { PublicKey, Keypair, Transaction, SystemProgram } from "@solana/web3.js";
-import {get_provider_keypair, load_program_from_idl} from "./utils/idl";
-
-import {NodeWallet} from "@project-serum/anchor/dist/esm/provider";
-import {Key} from "readline";
-import { BN, Provider, Wallet } from "@project-serum/anchor";
-import {log_change_in_balance} from "./utils/logging";
-import {account_with_sol} from "./utils/anchor_stuff";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { get_provider_keypair } from "./utils/idl";
+import { log_change_in_balance } from "./utils/logging";
 import * as fs from "fs";
 
 
@@ -16,15 +11,15 @@ process.env.ANCHOR_WALLET = get_provider_keypair();
 // `\\\\wsl$\\Ubuntu\\home\\source\\our_escrow\\target\\deploy\\gamble_match_escrow-keypair.json`
 
 process.env.ANCHOR_WALLET = "/home/source/escrow2/target/deploy/unlucky-keypair.json";
-export const provider = anchor.Provider.local("https://api.devnet.solana.com", { commitment: "processed" })
-anchor.setProvider(provider)
+export const provider = anchor.Provider.local("https://api.devnet.solana.com", { commitment: "processed" });
+anchor.setProvider(provider);
 
 console.log(JSON.parse(JSON.stringify({
     publicKey: provider.wallet.payer.publicKey.toBytes(),
     privateKey: provider.wallet.payer.secretKey
-})))
+})));
 
-console.log()
+console.log();
 
 
 //
@@ -293,20 +288,20 @@ const test_mint = async (secondUser: Keypair) => {
     await mint.mintTo(
         tokenAccountA,
         mintAuthority.publicKey,
-        [mintAuthority],
+        [ mintAuthority ],
         initializerAmount
     );
 
     await mint.mintTo(
         tokenAccountB,
         mintAuthority.publicKey,
-        [mintAuthority],
+        [ mintAuthority ],
         initializerAmount
     );
 
     let tokenAccountRefreshed = await mint.getAccountInfo(tokenAccountA);
-    const newTokenAccountAmount = tokenAccountRefreshed.amount.toNumber()
-    console.log(`Did mint work? ${(newTokenAccountAmount === initializerAmount) ? "YES" : "NO"}`);
+    const newTokenAccountAmount = tokenAccountRefreshed.amount.toNumber();
+    console.log(`Did mint work? ${ (newTokenAccountAmount === initializerAmount) ? "YES" : "NO" }`);
     return { mint, tokenAccountA, tokenAccountB: null };
 };
 
@@ -315,6 +310,7 @@ interface InitContractArgs {
     tokenAccountA: PublicKey,
     mint: PublicKey
 }
+
 const init_contract = async ({ program, tokenAccountA, mint }: InitContractArgs) => {
     // const payer2 = anchor.web3.Keypair.generate();
 
@@ -323,15 +319,15 @@ const init_contract = async ({ program, tokenAccountA, mint }: InitContractArgs)
     // console.log(balance);
     const takeAmount = new anchor.BN(500);
     // const matchAccount = await account_with_sol();
-    const [_pda, _nonce] = await anchor.web3.PublicKey.findProgramAddress(
-        [Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed"))],
+    const [ _pda, _nonce ] = await anchor.web3.PublicKey.findProgramAddress(
+        [ Buffer.from(anchor.utils.bytes.utf8.encode("authority-seed")) ],
         program.programId
     );
     const escrow_account = anchor.web3.Keypair.generate();
     // const mintAuthority = anchor.web3.Keypair.generate();
     const vault_handler = anchor.web3.Keypair.generate();
     const tx = await program.rpc.initialize(takeAmount, {
-        accounts:{
+        accounts: {
             initializer: provider.wallet.publicKey,
             mint: mint,
             initializerDepositTokenAccount: tokenAccountA,
@@ -342,14 +338,14 @@ const init_contract = async ({ program, tokenAccountA, mint }: InitContractArgs)
             tokenProgram: TOKEN_PROGRAM_ID,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
         },
-        signers: [escrow_account, provider.wallet.payer, vault_handler],
+        signers: [ escrow_account, provider.wallet.payer, vault_handler ],
         // instructions: [
         //     await program.account.matchAccount.createInstruction(escrow_account)
         // ]
     });
     // const balance_after = await provider.connection.getBalance(provider.wallet.publicKey) / sol_divisor;
     // await balance_logger();
-    console.log()
+    console.log();
     // let _TokenAccountPDA = await mint.getAccountInfo(provider.wallet.publicKey);
     // let _TokenAccountA = await mint.getAccountInfo(TokenAccountA);
     // const tx = await program.rpc.initializeEscrow(new anchor.BN(123),{
@@ -385,6 +381,7 @@ interface AddUserArgs {
     tokenAccountPda: AccountInfo,
     secondUser: Keypair
 }
+
 // const {
 //     receiver,
 //     mintAuthority,
@@ -395,8 +392,8 @@ interface AddUserArgs {
 const add_user = async ({ mint, program, secondUser, tokenAccountB, matchAccount, tokenAccountPda }: AddUserArgs) => {
     const balance_logger = await log_change_in_balance(provider, secondUser);
     const depositTokenAccount = await mint.getAccountInfo(tokenAccountB);
-    const tx2 = await program.rpc.addUser(new anchor.BN(123),{
-        accounts:{
+    const tx2 = await program.rpc.addUser(new anchor.BN(123), {
+        accounts: {
             addUserAccount: secondUser.publicKey,
             mint: mint.publicKey,
             depositTokenAccount: depositTokenAccount,
@@ -405,7 +402,7 @@ const add_user = async ({ mint, program, secondUser, tokenAccountB, matchAccount
             systemProgram: anchor.web3.SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
         },
-        signers: [secondUser],
+        signers: [ secondUser ],
     });
     await balance_logger();
     console.log("Your transaction signature", tx2);

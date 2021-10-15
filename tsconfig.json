@@ -11,7 +11,7 @@
       "dom.iterable",
       "esnext",
       "es2016.array.include",
-      "es2017.object",
+      "es2017.object"
     ],
     "module": "commonjs",
     "moduleResolution": "node",

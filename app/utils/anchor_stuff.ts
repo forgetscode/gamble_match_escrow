@@ -1,8 +1,7 @@
-import {Provider, Wallet} from "@project-serum/anchor";
-import { PublicKey, Keypair } from "@solana/web3.js";
 // import {provider} from "../some_test2";
 import * as anchor from "@project-serum/anchor";
-import { Buffer } from "buffer";
+import { Provider, Wallet } from "@project-serum/anchor";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import { BetterPDA } from "../anchor_api_wrap/better_pda";
 
 export type WithPublicKey = PublicKey | Provider | Wallet | Keypair;

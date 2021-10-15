@@ -1,5 +1,5 @@
-use std::cmp::Ordering;
 use anchor_lang::prelude::Pubkey;
+use std::cmp::Ordering;
 
 impl Eq for SizedKey {}
 
@@ -33,5 +33,5 @@ impl SizedKey {
 
 pub struct SizedKey {
     pub pub_key: Pubkey,
-    pub hash_pos: u32
+    pub hash_pos: u32,
 }

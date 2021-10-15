@@ -1,12 +1,12 @@
-import {Token, TOKEN_PROGRAM_ID} from "@solana/spl-token";
+import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Provider } from "@project-serum/anchor";
-import * as anchor from "@project-serum/anchor";
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import { deserialize_keypair, serialize_keypair } from "../utils/serialization";
 import { CachedKeypair } from "./cached_keypair";
 
 let instance: CachedMint;
+
 export class CachedMint {
     mint: Token;
     payer: CachedKeypair;
@@ -34,7 +34,7 @@ export class CachedMint {
         const new_mint = CachedMint.loadMint(path, provider);
         instance = new_mint;
         return new_mint;
-    }
+    };
 
     static newMint = async (provider: Provider): Promise<CachedMint> => {
         // const payer = anchor.web3.Keypair.generate();
@@ -54,7 +54,22 @@ export class CachedMint {
             CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey),
             CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey)
         );
-    }
+    };
+
+    static loadMint = (path: string, provider: Provider) => {
+        if (!fs.existsSync(path)) {
+            throw new Error(`tried to load a mint at path ${ path } but it doesn't exist!`);
+        }
+        const data = JSON.parse(fs.readFileSync(path, { encoding: "utf-8" }));
+        const payer = deserialize_keypair(data.payer);
+        const mintAuthority = deserialize_keypair(data.mintAuthority);
+        const mint = new Token(provider.connection, new PublicKey(data.mint), TOKEN_PROGRAM_ID, payer);
+        return new CachedMint(
+            mint,
+            payer,
+            mintAuthority
+        );
+    };
 
     make_token_account_for_user = async (
         accountPubkey: PublicKey | string,
@@ -69,11 +84,11 @@ export class CachedMint {
         await this.mint.mintTo(
             tokenAccountA,
             this.payer,
-            [this.mintAuthority],
+            [ this.mintAuthority ],
             amount
         );
         return tokenAccountA;
-    }
+    };
 
     saveMint = (path: string) => {
         fs.writeFileSync(path, JSON.stringify({
@@ -81,20 +96,5 @@ export class CachedMint {
             payer: serialize_keypair(this.payer),
             mintAuthority: serialize_keypair(this.mintAuthority)
         }, null, 4), { encoding: "utf-8" });
-    }
-
-    static loadMint = (path: string, provider: Provider) => {
-        if (!fs.existsSync(path)) {
-            throw new Error(`tried to load a mint at path ${path} but it doesn't exist!`);
-        }
-        const data = JSON.parse(fs.readFileSync(path, { encoding: "utf-8" }));
-        const payer = deserialize_keypair(data.payer);
-        const mintAuthority = deserialize_keypair(data.mintAuthority);
-        const mint = new Token(provider.connection, new PublicKey(data.mint), TOKEN_PROGRAM_ID, payer);
-        return new CachedMint(
-            mint,
-            payer,
-            mintAuthority
-        );
-    }
+    };
 }

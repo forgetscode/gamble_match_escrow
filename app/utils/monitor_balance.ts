@@ -1,20 +1,24 @@
 import { Provider } from "@project-serum/anchor";
-import { PublicKey, Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 
 export class MonitorBalances {
-    keypair_balances: {[key: string]: {
-        balances: {
-            balance: number,
-            update_name: string
-        }[],
+    keypair_balances: {
+        [key: string]: {
+            balances: {
+                balance: number,
+                update_name: string
+            }[],
             name: string,
             pk: string
-        }} = {};
+        }
+    } = {};
     provider: Provider;
+
     constructor(provider: Provider) {
         this.provider = provider;
     }
-    add_keypairs = async (kp_names: [Keypair, string][]) => {
+
+    add_keypairs = async (kp_names: [ Keypair, string ][]) => {
         if (!Array.isArray(kp_names)) {
             throw Error("add_keypairs needs an array!");
         }
@@ -24,7 +28,7 @@ export class MonitorBalances {
             name = item[1];
             await this.add_keypair(kp, name);
         }
-    }
+    };
     add_keypair = async (kp: Keypair, name: string) => {
         const kp_key = kp.publicKey.toString();
         const balance = await this.provider.connection.getBalance(kp.publicKey);
@@ -46,7 +50,7 @@ export class MonitorBalances {
             name: name,
             pk: kp_key
         };
-    }
+    };
     get_balance = async (pk: PublicKey, update_name: string) => {
         const new_balance = await this.provider.connection.getBalance(pk);
         return {
@@ -55,7 +59,7 @@ export class MonitorBalances {
                 update_name
             }
         };
-    }
+    };
     get_new_balance = async (update_name: string) => {
         const new_balance_promises = [];
         for (const pk of Object.keys(this.keypair_balances)) {
@@ -64,7 +68,7 @@ export class MonitorBalances {
             new_balance_promises.push(this.get_balance(pub_key, update_name));
         }
         return Object.assign({}, ...await Promise.all(new_balance_promises));
-    }
+    };
     update_balances = async (update_name: string) => {
         const new_balances = await this.get_new_balance(update_name);
         for (const key of Object.keys(this.keypair_balances)) {
@@ -73,11 +77,11 @@ export class MonitorBalances {
                 ...this.keypair_balances[key].balances
             ];
         }
-    }
+    };
     log_all_changes = async () => {
         const new_balances = await this.get_new_balance("final");
         console.log(`\n######################################\n`);
-        for (const [key, account] of Object.entries(this.keypair_balances)) {
+        for (const [ key, account ] of Object.entries(this.keypair_balances)) {
             let prev = null;
             let updates = [];
             for (const balance of [
@@ -86,13 +90,13 @@ export class MonitorBalances {
             ].reverse()) {
                 if (prev !== null) {
                     if (prev.balance !== balance.balance) {
-                        updates.push(`Change in balance after ${balance.update_name} :: ${prev.balance} -> ${balance.balance}`);
+                        updates.push(`Change in balance after ${ balance.update_name } :: ${ prev.balance } -> ${ balance.balance }`);
                     }
                 }
                 prev = balance;
             }
-            console.log(`Balance changes for ${account.name} <${key}>:\n${updates.join("\n")}`);
+            console.log(`Balance changes for ${ account.name } <${ key }>:\n${ updates.join("\n") }`);
             console.log(`\n######################################\n`);
         }
-    }
+    };
 }
