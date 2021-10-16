@@ -1,6 +1,4 @@
 const anchor = require('@project-serum/anchor');
-const assert = require("assert");
-const {TOKEN_PROGRAM_ID, Token} = require("@solana/spl-token");
 
 class MonitorBalances {
     keypair_balances = {}
@@ -94,7 +92,8 @@ describe('unlucky', () => {
         const provider = anchor.Provider.env();
         it('Is initialized!', async () => {
             console.log(__dirname)
-            await require(`../prod/app/new_test`).do_test(provider);
+            const test_file = require(`../prod/new_test`);
+            await test_file.do_test(provider);
         });
     }
 );

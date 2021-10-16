@@ -28,7 +28,16 @@ in rust
            minus the fee for playing the game
         . if there is a winner, transfer funds to the winning player's account from all PDAs
 
-
+-> when user wants to join a match, check if a valid one already exists for them
+  -> if no valid match exists:
+    : in javascript
+    -> derive a PDA address from this keypair
+    -> derive a second order address from the PDA and the user's account key
+    -> call method in contract, passing in the PDA address for this match, the user's token account & the amount being wagered
+    : in rust contract
+    -> (in attributes) create an XYZ temp token account for the user using this second order address
+    -> transfer funds from the user's token account into the user derived temp token account
+    -> transfer authority of the temp token account to the PDA
 
 
 

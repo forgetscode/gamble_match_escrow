@@ -1,5 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import * as fs from "fs";
+import { Program } from "./program_type";
 
 const appRoot = require('app-root-path').path;
 
@@ -43,7 +44,7 @@ interface LoadProgramOpts {
     load_toml?: boolean;
 }
 
-export const load_program_from_idl = (program?: LoadProgramOpts): anchor.Program => {
+export const load_program_from_idl = (program?: LoadProgramOpts): Program => {
     if (program && program.load_toml != null && program.address != null) {
         throw Error("load_program_from_idl only accepts one of address or load_toml as options!");
     }
@@ -57,5 +58,5 @@ export const load_program_from_idl = (program?: LoadProgramOpts): anchor.Program
     const idl = JSON.parse(fs.readFileSync(`${ target_dir }/${ fns[0] }`, 'utf8'));
     const resolved_address = get_address(idl, program?.address, program?.load_toml);
     const programId = new anchor.web3.PublicKey(resolved_address);
-    return new anchor.Program(idl, programId);
+    return new anchor.Program(idl, programId) as unknown as Program;
 };

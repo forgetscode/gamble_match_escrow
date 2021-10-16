@@ -34,7 +34,7 @@ export class CachedMint {
         const new_mint = CachedMint.loadMint(path, provider);
         instance = new_mint;
         return new_mint;
-    };
+    }
 
     static newMint = async (provider: Provider): Promise<CachedMint> => {
         // const payer = anchor.web3.Keypair.generate();
@@ -54,7 +54,7 @@ export class CachedMint {
             CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey),
             CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey)
         );
-    };
+    }
 
     static loadMint = (path: string, provider: Provider) => {
         if (!fs.existsSync(path)) {
@@ -69,7 +69,7 @@ export class CachedMint {
             payer,
             mintAuthority
         );
-    };
+    }
 
     make_token_account_for_user = async (
         accountPubkey: PublicKey | string,
@@ -88,7 +88,7 @@ export class CachedMint {
             amount
         );
         return tokenAccountA;
-    };
+    }
 
     saveMint = (path: string) => {
         fs.writeFileSync(path, JSON.stringify({
@@ -96,5 +96,5 @@ export class CachedMint {
             payer: serialize_keypair(this.payer),
             mintAuthority: serialize_keypair(this.mintAuthority)
         }, null, 4), { encoding: "utf-8" });
-    };
+    }
 }

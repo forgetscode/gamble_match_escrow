@@ -2,7 +2,7 @@ import { AccountInfo, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as anchor from "@project-serum/anchor";
 import promise_then_catch from "promise-then-catch/lib";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { get_provider_keypair } from "./utils/idl";
+import { get_provider_keypair } from "./anchor_api_wrap/provider/idl";
 import { log_change_in_balance } from "./utils/logging";
 import * as fs from "fs";
 
