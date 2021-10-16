@@ -17,7 +17,7 @@ const make_token_account = async (mintWrapper: CachedMint, userWallet: NodeWalle
 };
 
 export const make_mint = async (provider: Provider): Promise<CachedMint> => {
-    return await CachedMint.getOrCreateMint(provider, `${app_root}/data_cache/mint_idl.json`, false);
+    return await CachedMint.getOrCreateMint(provider, `${app_root}/data_cache/mint_idl.json`, c.remake_all_vals);
 };
 
 export const create_new_match = () => {
@@ -82,8 +82,14 @@ export class Simulation {
         this.match = match;
         this.mint = mint;
     }
-    async get_simulated_user(): Promise<SimulatedUser> {
+    async get_simulated_user(air_drop_lamports?: boolean): Promise<SimulatedUser> {
         const simulated_user = await SimulatedUser.init_user(this.user_num, this.mint);
+        if (air_drop_lamports) {
+            await c.provider.connection.confirmTransaction(
+                await c.provider.connection.requestAirdrop(simulated_user.user.publicKey, 10000000000),
+                'recent'
+            );
+        }
         this.user_num++;
         this.users.push(simulated_user);
         return simulated_user;

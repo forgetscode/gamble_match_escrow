@@ -29,6 +29,7 @@ const user_requests_new_match = async (
         name: "user account",
         is_mint_token_acc: false
     }, {
+        // @ts-ignore
         pk: provider.wallet.payer,
         name: "provider.wallet.payer",
         is_mint_token_acc: false
@@ -36,7 +37,6 @@ const user_requests_new_match = async (
 
     const add_user_accounts: AddUserArgs = {
         accounts: {
-            initializer: provider.wallet.publicKey,
             mint: simulation.mint.mint.publicKey,
             userAccount: user.user.publicKey,
             fromUserTokenAccount: user.user_token_account,
@@ -46,6 +46,7 @@ const user_requests_new_match = async (
             tokenProgram: TOKEN_PROGRAM_ID,
             rent: anchor.web3.SYSVAR_RENT_PUBKEY
         },
+        // @ts-ignore
         signers: [ user.user.payer, provider.wallet.payer, user_temp_token_address ]
     };
 
@@ -64,7 +65,8 @@ const user_requests_new_match = async (
             matchAuthority: simulation.match.match_keypair.publicKey,
             userAccount: user.user.publicKey,
             programSigner: pda,
-            tokenProgram: TOKEN_PROGRAM_ID
+            tokenProgram: TOKEN_PROGRAM_ID,
+            mint: simulation.mint.mint.publicKey,
         }
     };
     await program.rpc.transferToken(new BN(250), new BN(nonce), transferArgs);
@@ -73,6 +75,7 @@ const user_requests_new_match = async (
     const leaveArgs: LeaveArgs = {
         accounts: {
             matchAuthority: simulation.match.match_keypair.publicKey,
+            // @ts-ignore
             lamportRecipient: provider.wallet.payer.publicKey,
             fromTempTokenAccount: user_temp_token_address.publicKey,
             toUserTokenAccount: user.user_token_account,
@@ -88,8 +91,8 @@ const user_requests_new_match = async (
 
 const do_stuff = async () => {
     const simulation = await Simulation.init_simulation();
-    const owned_token_accs = await provider.connection.getTokenAccountsByOwner(new PublicKey("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH"), { mint: new PublicKey("2o4wvUNpwLq3k1uLF1Xibn5esYCg2wG5rXSu9WJLK7mA")})
-    console.log(owned_token_accs);
+    // const owned_token_accs = await provider.connection.getTokenAccountsByOwner(new PublicKey("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH"), { mint: new PublicKey("2o4wvUNpwLq3k1uLF1Xibn5esYCg2wG5rXSu9WJLK7mA")})
+    // console.log(owned_token_accs);
     // await simulation.mint.make_token_account_for_user("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH", 5000);
     // // await simulation.mint.mint.mintTo(
     // //     new PublicKey("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH"),
@@ -97,7 +100,7 @@ const do_stuff = async () => {
     // //     [simulation.mint.mintAuthority],
     // //     5000
     // // );
-    const user_requesting_match = await simulation.get_simulated_user();
+    const user_requesting_match = await simulation.get_simulated_user(true);
     await user_requests_new_match(
         simulation,
         user_requesting_match

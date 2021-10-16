@@ -52,7 +52,9 @@ export class CachedMint {
         );
         return new CachedMint(
             mint,
+            // @ts-ignore
             CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey),
+            // @ts-ignore
             CachedKeypair.fromSecretKey(provider.wallet.payer.secretKey)
         );
     }

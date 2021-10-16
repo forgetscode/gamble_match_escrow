@@ -57,16 +57,18 @@ pub mod unlucky {
         Ok(())
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(mut)]
-    pub initializer: Signer<'info>
-}
+//
+// #[derive(Accounts)]
+// pub struct Initialize<'info> {
+//     #[account(mut)]
+//     pub initializer: Signer<'info>
+// }
 
 #[derive(Accounts)]
 #[instruction(wager_amount: u64)]
 pub struct AddUserToMatch<'info> {
+    // #[account(mut)]
+    // pub initializer: Signer<'info>,
     pub match_authority: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
@@ -78,9 +80,9 @@ pub struct AddUserToMatch<'info> {
     pub from_user_token_account: Account<'info, TokenAccount>,
     #[account(
         init,
-        payer = initializer,
+        payer = user_account,
         token::mint = mint,
-        token::authority = initializer,
+        token::authority = user_account,
     )]
     pub to_temp_user_token_account: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
@@ -104,6 +106,7 @@ pub struct TransferToken<'info> {
     #[account(mut)]
     pub program_signer: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
+    pub mint: Account<'info, Mint>,
 }
 
 #[derive(Accounts)]
@@ -137,7 +140,7 @@ impl<'info> AddUserToMatch<'info> {
     fn into_set_authority_context(&self) -> CpiContext<'_, '_, '_, 'info, SetAuthority<'info>> {
         let cpi_accounts = SetAuthority {
             account_or_mint: self.to_temp_user_token_account.to_account_info().clone(),
-            current_authority: self.initializer.to_account_info().clone(),
+            current_authority: self.user_account.to_account_info().clone(),
         };
         CpiContext::new(self.token_program.clone(), cpi_accounts)
     }

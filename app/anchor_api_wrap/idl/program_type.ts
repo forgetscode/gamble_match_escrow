@@ -6,7 +6,6 @@ export type Signers = Keypair[];
 export type RemainingAccount = { pubkey: PublicKey, isMut?: boolean, isSigner?: boolean };
 export type RemainingAccounts = RemainingAccount[];
 export type AddUserAccounts = {
-    initializer: PublicKey;
     matchAuthority: PublicKey;
     mint: PublicKey;
     userAccount: PublicKey;
@@ -28,6 +27,7 @@ export type TransferTokenAccounts = {
     userAccount: PublicKey;
     programSigner: PublicKey;
     tokenProgram: PublicKey;
+    mint: PublicKey;
 };
 export type TransferTokenArgs = {
     accounts: TransferTokenAccounts,
@@ -51,16 +51,9 @@ export interface RpcNamespace {
     transferToken: (transferAmount: BN, nonce: BN, named_args: TransferTokenArgs) => Promise<string>;
     leave: (nonce: BN, named_args: LeaveArgs) => Promise<string>;
 }
-// export declare class Program implements anchor.Program {
-//     // @ts-ignore
-//     readonly rpc: RpcNamespace;
-//     programId: PublicKey;
-//     coder: Coder;
-// }
-
-export declare type Program = anchor.Program & {
+export declare class Program implements anchor.Program {
+    // @ts-ignore
     readonly rpc: RpcNamespace;
     programId: PublicKey;
     coder: Coder;
-};
-
+}
