@@ -14,33 +14,7 @@ import * as anchor from "@project-serum/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { get_user_token_accs } from "./send-stuff-test";
 import { useQuery } from "react-query";
-import { Wallet, WalletName } from "@solana/wallet-adapter-wallets";
-import temp from "../../../target/idl/unlucky.json";
-
-// type IdlType = typeof temp;
-
-export interface IDLType {
-    version:      string;
-    name:         string;
-    instructions: Instruction[];
-}
-
-export interface Instruction {
-    name:     string;
-    accounts: Account[];
-    args:     Arg[];
-}
-
-export interface Account {
-    name:     string;
-    isMut:    boolean;
-    isSigner: boolean;
-}
-
-export interface Arg {
-    name: string;
-    type: string;
-}
+import { Wallet } from "@solana/wallet-adapter-wallets";
 
 export type Some<T> = T | undefined;
 

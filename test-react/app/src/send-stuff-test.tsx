@@ -9,6 +9,7 @@ import { useQuery } from "react-query";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { NodeWallet } from "../../../app/utils/provider";
 import { SolanaAccountInfo } from "./App";
+import { useSolanaGame } from "use-solana-game";
 
 
 export const get_user_token_accs = async (connection: Connection, mint_pub_key: PublicKey, pub_key: PublicKey, deposit_amount: number): Promise<SolanaAccountInfo> => {
@@ -28,6 +29,7 @@ export const get_user_token_accs = async (connection: Connection, mint_pub_key: 
 };
 
 export const SendStuffTest: FC = () => {
+    const x = useSolanaGame();
     const { connection } = useConnection();
     const wallet = useWallet();
     // const { publicKey, sendTransaction } = wallet;
