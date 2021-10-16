@@ -59,14 +59,10 @@ pub mod unlucky {
 }
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(mut)]
-    pub initializer: Signer<'info>
-}
-
-#[derive(Accounts)]
 #[instruction(wager_amount: u64)]
 pub struct AddUserToMatch<'info> {
+    #[account(mut)]
+    pub initializer: Signer<'info>,
     pub match_authority: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]

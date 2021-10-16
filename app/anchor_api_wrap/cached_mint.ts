@@ -4,6 +4,7 @@ import { PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import { deserialize_keypair, serialize_keypair } from "../utils/serialization";
 import { CachedKeypair } from "./cached_keypair";
+const app_root = require("app-root-path").path;
 
 let instance: CachedMint;
 
@@ -22,7 +23,7 @@ export class CachedMint {
         this.mintAuthority = mintAuthority;
     }
 
-    static getOrCreateMint = async (provider: Provider, path: string = "./data_cache/mint_idl.json", make_new = false) => {
+    static getOrCreateMint = async (provider: Provider, path: string = `${app_root}/data_cache/mint_idl.json`, make_new = false) => {
         if (instance != null) {
             return instance;
         } else if (make_new || !fs.existsSync(path)) {
@@ -81,12 +82,14 @@ export class CachedMint {
         const pubKey = typeof accountPubkey === "string" ? new PublicKey(accountPubkey) : accountPubkey;
         // const info = await this.mint.getMintInfo();
         const tokenAccountA: PublicKey = await this.mint.createAccount(pubKey);
-        await this.mint.mintTo(
-            tokenAccountA,
-            this.payer,
-            [ this.mintAuthority ],
-            amount
-        );
+        if (amount > 0) {
+            await this.mint.mintTo(
+                tokenAccountA,
+                this.payer,
+                [ this.mintAuthority ],
+                amount
+            );
+        }
         return tokenAccountA;
     }
 

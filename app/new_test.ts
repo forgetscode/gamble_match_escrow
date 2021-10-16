@@ -8,6 +8,7 @@ import { AddUserArgs, LeaveArgs, TransferTokenAccounts, TransferTokenArgs } from
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { BN } from "@project-serum/anchor";
 import { MonitorBalances } from "./utils/monitor_balance";
+import { PublicKey } from "@solana/web3.js";
 
 const user_requests_new_match = async (
     simulation: Simulation,
@@ -87,6 +88,15 @@ const user_requests_new_match = async (
 
 const do_stuff = async () => {
     const simulation = await Simulation.init_simulation();
+    const owned_token_accs = await provider.connection.getTokenAccountsByOwner(new PublicKey("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH"), { mint: new PublicKey("2o4wvUNpwLq3k1uLF1Xibn5esYCg2wG5rXSu9WJLK7mA")})
+    console.log(owned_token_accs);
+    // await simulation.mint.make_token_account_for_user("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH", 5000);
+    // // await simulation.mint.mint.mintTo(
+    // //     new PublicKey("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH"),
+    // //     simulation.mint.mint.payer,
+    // //     [simulation.mint.mintAuthority],
+    // //     5000
+    // // );
     const user_requesting_match = await simulation.get_simulated_user();
     await user_requests_new_match(
         simulation,

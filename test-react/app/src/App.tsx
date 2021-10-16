@@ -11,6 +11,8 @@ import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-r
 import { Idl } from "@project-serum/anchor/src/idl";
 
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { Wallet } from "./wallet_provider";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 // mint:"BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76"
 // wallet_one:"5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH" token_account:"Bk5xX3fi1bdwXCrrB8c8EXy4ZQMLdCj3m2xBUvdzYzQW"
@@ -56,50 +58,16 @@ function App() {
         const connection = new Connection(network, opts.preflightCommitment);
 
         return new Provider(
-            connection, wallet as any,
+            connection,
+            wallet as any,
             opts
         );
     }
 
 
-    async function getMint() {
-
-
-        const provider = await getProvider();
-        /* create the program interface combining the idl, program ID, and provider */
-        const program = new Program(idl, programID, provider);
-
-        const userTokenAccount = await provider.connection.getTokenAccountsByOwner(provider.wallet.publicKey, { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") });
-
-        console.log(userTokenAccount);
-
-        console.log(userTokenAccount.value as {
-            pubkey: PublicKey;
-            account: solana.AccountInfo<Buffer>;
-        }[]);
-    }
-
-    // set constraint to make sure we take a token account that has enough tokens
-    //   const user_token_accounts = (await connection.connection.getTokenAccountsByOwner(
-    //     provider.wallet.publicKey,
-    //     { mint: new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76") }
-    // )).value as {
-    //   pubkey: PublicKey;
-    //   account: AccountInfo<Buffer>;
-    // }[];
-    // const valid_user_token_accounts = user_token_accounts.filter(async user_account => {
-    //   const balance = await connection.connection.getTokenAccountBalance(user_account.pubkey, "confirmed");
-    //   const amount = (balance.value as TokenAmount).uiAmount;
-    //   return amount != null && amount > deposit_amount.toNumber();
-    // });
-    // if (valid_user_token_accounts.length <= 0) {
-    //   throw new Error("no valid accounts!");
-    // }
-    // const user_token_account = valid_user_token_accounts[0];
-    // make sure in smart contract that token account had enough tokens
-
-
     async function initialize() {
+        // tslint:disable-next-line:no-debugger
+        debugger;
 
         const provider = await getProvider();
         /* create the program interface combining the idl, program ID, and provider */
@@ -159,7 +127,7 @@ function App() {
         /* create the program interface combining the idl, program ID, and provider */
         const program = new Program(idl, programID, provider);
 
-        let mintA = new PublicKey("BDaZrrPYF5ns5xdYTdJ8hjTsLRQouT5P1Fh9k5SJbe76");
+        let mintA = new PublicKey("2o4wvUNpwLq3k1uLF1Xibn5esYCg2wG5rXSu9WJLK7mA");
         let send_token_account = initialized_temp_token;
         let reciever_token_account = new PublicKey("2z93tN6axmqi61peuaJEXy17fseHZfSayw67CsnLGCYy");
 
@@ -210,15 +178,18 @@ function App() {
         );
     }
 }
-
+const queryClient = new QueryClient();
 const AppWithProvider = () => (
-    <ConnectionProvider endpoint={ clusterApiUrl('devnet') }>
-        <WalletProvider wallets={ wallets } autoConnect>
-            <WalletModalProvider>
-                <App/>
-            </WalletModalProvider>
-        </WalletProvider>
-    </ConnectionProvider>
+    <QueryClientProvider client={queryClient}>
+        <Wallet/>
+    </QueryClientProvider>
+    // <ConnectionProvider endpoint={ clusterApiUrl('devnet') }>
+    //     <WalletProvider wallets={ wallets } autoConnect>
+    //         <WalletModalProvider>
+    //             <App/>
+    //         </WalletModalProvider>
+    //     </WalletProvider>
+    // </ConnectionProvider>
 );
 
 export default AppWithProvider;

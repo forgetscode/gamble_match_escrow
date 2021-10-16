@@ -6,6 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { Token } from "@solana/spl-token";
 import { c } from "../setup_const";
 import { BetterPDA } from "../anchor_api_wrap/better_pda";
+const app_root = require("app-root-path").path;
 
 
 const make_token_account = async (mintWrapper: CachedMint, userWallet: NodeWallet, amount = 2000) => {
@@ -16,16 +17,16 @@ const make_token_account = async (mintWrapper: CachedMint, userWallet: NodeWalle
 };
 
 export const make_mint = async (provider: Provider): Promise<CachedMint> => {
-    return await CachedMint.getOrCreateMint(provider, "./data_cache/mint_idl.json", c.remake_all_vals);
+    return await CachedMint.getOrCreateMint(provider, `${app_root}/data_cache/mint_idl.json`, false);
 };
 
 export const create_new_match = () => {
-    return CachedKeypair.getOrCreateKp("./data_cache/match_key_idl.json", c.remake_all_vals);
+    return CachedKeypair.getOrCreateKp(`${app_root}/data_cache/match_key_idl.json`, c.remake_all_vals);
 };
 
 
 export const new_user_wallet = (user_num: number) => {
-    const simulatedKeyPair = CachedKeypair.getOrCreateKp(`./data_cache/simulated_key_pair_idl_${ user_num }.json`, c.remake_all_vals);
+    const simulatedKeyPair = CachedKeypair.getOrCreateKp(`${app_root}/data_cache/simulated_key_pair_idl_${ user_num }.json`, c.remake_all_vals);
     return new NodeWallet(simulatedKeyPair.kp);
 };
 
@@ -96,6 +97,7 @@ export class Simulation {
     static async init_simulation() {
         const match = await SimulatedMatch.init_match();
         const mint = await make_mint(c.provider);
+        console.log(mint.mint.publicKey.toBase58());
         return new Simulation(
             match,
             mint

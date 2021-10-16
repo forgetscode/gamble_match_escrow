@@ -16,21 +16,25 @@ export const get_provider_keypair = () => {
     }
 };
 
+export const get_program_id_from_anchor = () => {
+    const toml = fs.readFileSync(`${ appRoot }/Anchor.toml`, { encoding: "utf8" });
+    let next_line = false;
+    for (const line of toml.split("\n")) {
+        if (line.startsWith("[programs")) {
+            next_line = true;
+        } else if (next_line) {
+            const splitted = line.split("=");
+            const trimmed = splitted[splitted.length - 1].trim();
+            return trimmed.replace(/"/g, "");
+        }
+    }
+};
+
 const get_address = (idl: any, address?: string, load_toml?: boolean) => {
     if (address) {
         return address;
     } else if (load_toml) {
-        const toml = fs.readFileSync(`${ appRoot }/Anchor.toml`, { encoding: "utf8" });
-        let next_line = false;
-        for (const line of toml.split("\n")) {
-            if (line.startsWith("[programs")) {
-                next_line = true;
-            } else if (next_line) {
-                const splitted = line.split("=");
-                const trimmed = splitted[splitted.length - 1].trim();
-                return trimmed.replace(/"/g, "");
-            }
-        }
+        return get_program_id_from_anchor();
     } else if (!idl.hasOwnProperty("metadata")) {
         throw new Error("Idl has no metadata property!");
     } else if (!idl.metadata.hasOwnProperty("address")) {

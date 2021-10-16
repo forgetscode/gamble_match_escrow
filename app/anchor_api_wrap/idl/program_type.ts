@@ -51,9 +51,16 @@ export interface RpcNamespace {
     transferToken: (transferAmount: BN, nonce: BN, named_args: TransferTokenArgs) => Promise<string>;
     leave: (nonce: BN, named_args: LeaveArgs) => Promise<string>;
 }
-export declare class Program implements anchor.Program {
-    // @ts-ignore
+// export declare class Program implements anchor.Program {
+//     // @ts-ignore
+//     readonly rpc: RpcNamespace;
+//     programId: PublicKey;
+//     coder: Coder;
+// }
+
+export declare type Program = anchor.Program & {
     readonly rpc: RpcNamespace;
     programId: PublicKey;
     coder: Coder;
-}
+};
+

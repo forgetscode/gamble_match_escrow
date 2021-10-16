@@ -3,9 +3,9 @@ import { SolanaAccountInfo } from "../../test-react/app/src/App";
 import { c } from "../setup_const";
 import { PublicKey, TokenAmount } from "@solana/web3.js";
 
-export const get_user_token_accs = async (mint_pub_key: PublicKey, user_wallet: NodeWallet): Promise<SolanaAccountInfo> => {
+export const get_user_token_accs = async (mint_pub_key: PublicKey, user_wallet: NodeWallet | PublicKey): Promise<SolanaAccountInfo> => {
     const user_token_accounts = (await c.provider.connection.getTokenAccountsByOwner(
-        user_wallet.publicKey,
+        user_wallet instanceof PublicKey ? user_wallet : user_wallet.publicKey,
         { mint: mint_pub_key }
     )).value;
     const valid_user_token_accounts = user_token_accounts.filter(async user_account => {
