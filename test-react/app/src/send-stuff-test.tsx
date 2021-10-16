@@ -8,8 +8,17 @@ import { AddUserArgs, Program } from "../../../app/anchor_api_wrap/idl/program_t
 import { useQuery } from "react-query";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { NodeWallet } from "../../../app/utils/provider";
-import { SolanaAccountInfo } from "./App";
-import { useSolanaGame } from "use-solana-game";
+import { useSolanaGame } from "./front/src";
+import { useSolanaGame as useSolanaGameRemote } from "use-solana-game";
+
+// console.log(JSON.stringify(useSolanaGame) === JSON.stringify(useSolanaGameRemote));
+// const t: (props?: UseSolanaGame) => { joinRpcQueue: (matchId: string) => Promise<void> } = wololo;
+// const y: (props?: UseSolanaGame) => { joinRpcQueue: (matchId: string) => Promise<void> } = useSolanaGame;
+import solana from "@solana/web3.js";
+export type SolanaAccountInfo = {
+    pubkey: PublicKey,
+    account: solana.AccountInfo<Buffer>
+};
 
 
 export const get_user_token_accs = async (connection: Connection, mint_pub_key: PublicKey, pub_key: PublicKey, deposit_amount: number): Promise<SolanaAccountInfo> => {
@@ -29,9 +38,9 @@ export const get_user_token_accs = async (connection: Connection, mint_pub_key: 
 };
 
 export const SendStuffTest: FC = () => {
-    const x = useSolanaGame();
     const { connection } = useConnection();
     const wallet = useWallet();
+    const x = useSolanaGameRemote();
     // const { publicKey, sendTransaction } = wallet;
     const config = useQuery(["config"], async () => {
         const response = await fetch('http://localhost:5050/config/');
