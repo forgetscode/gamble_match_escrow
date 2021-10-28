@@ -11,7 +11,7 @@ export const get_provider_keypair = () => {
             const splitted = line.split("=");
             const trimmed = splitted[splitted.length - 1].trim();
             const replaced = trimmed.replace(/"/g, "").replace("~", "");
-            return !replaced.startsWith(process.env.HOME as any) ? `${ process.env.HOME }${ replaced }` : replaced;
+            return `${ appRoot }/${ replaced }`;
         }
     }
 };

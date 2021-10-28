@@ -6,9 +6,10 @@ const is_num = (type: string) =>
     /^[uif](8|16|32|64|128)$/g.test(type);
 
 
-type ArgType = "BN" | "string";
+type ArgTypeBase = "BN" | "string";
+type ArgType = ArgTypeBase | `${ArgTypeBase} | null`;
 
-const get_resolved_type = (type: string): ArgType => {
+const get_resolved_type_base = (type: string): ArgTypeBase => {
     if (is_num(type)) {
         return "BN";
     } else {
@@ -16,7 +17,18 @@ const get_resolved_type = (type: string): ArgType => {
     }
 };
 
-const generate_args = (args: { name: string, type: string }[]) =>
+const get_resolved_type = (type: TypeType): ArgType => {
+    if (typeof type === "string") {
+        return get_resolved_type_base(type);
+    } else if (typeof type === "object" && !Array.isArray(type) && type.hasOwnProperty("option")) {
+        return `${get_resolved_type_base(type.option)} | null`;
+    }
+    throw new Error("got bad type for idl!");
+};
+
+type TypeType = string | { option: string };
+
+const generate_args = (args: { name: string, type: TypeType }[]) =>
     args.reduce((obj, arg) => {
         const type = get_resolved_type(arg.type);
         return [ ...obj, `${arg.name}: ${type}`];
@@ -27,13 +39,14 @@ const generate_accounts = (accounts: { isSigner: boolean; name: string; isMut: b
         ...obj,
         `    ${account.name}: PublicKey;`
     ]), [] as string[]);
-    const are_signers = accounts.some(x => x.isSigner);
+    // const are_signers = accounts.some(x => x.isSigner);
     return `
 export type ${capitalized_name}Accounts = {
 ${account_fields.join("\n")}
 };
 export type ${capitalized_name}Args = {
-    accounts: ${capitalized_name}Accounts,${are_signers ? "\n    signers: Signers," : ""}
+    accounts: ${capitalized_name}Accounts,
+    signers?: Signers,
     remaining_accounts?: RemainingAccounts
 };`.trim();
 };

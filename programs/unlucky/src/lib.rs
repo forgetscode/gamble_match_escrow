@@ -5,11 +5,19 @@ use rust_base58::ToBase58;
 
 declare_id!("H6wh3ozZgxWgg1s9MjtRAoxsSuYBtgQafhkaoWEQGp7g");
 
+struct Testo {
+
+}
+
 #[program]
 pub mod unlucky {
     use super::*;
     const VAULT_AUTHORITY_SEED: &[u8] = b"authority-seed";
 
+    pub fn testo(_: Context<Testo>, vals: Vec<u8>) -> ProgramResult {
+
+        Ok(())
+    }
     pub fn add_user(ctx: Context<AddUserToMatch>, wager_amount: u64) -> ProgramResult {
         let seed = &[&ctx.accounts.match_authority.key().to_bytes()[..], &ctx.accounts.user_account.key().to_bytes()[..]];
         let (pda, _) = Pubkey::find_program_address(seed, ctx.program_id);
@@ -27,15 +35,21 @@ pub mod unlucky {
         Ok(())
     }
 
-    pub fn transfer_token(ctx: Context<TransferToken>, transfer_amount: u64, nonce: u8) -> ProgramResult {
+    pub fn transfer_token(ctx: Context<TransferToken>, transfer_amount: Option<u64>, nonce: u8) -> ProgramResult {
         let seeds = &[&ctx.accounts.match_authority.key().to_bytes()[..], &ctx.accounts.user_account.key().to_bytes()[..], &[nonce]];
         let signer = &[&seeds[..]];
+        let accounts = ctx.accounts;
+        let amount = accounts.from_token_account.amount;
+        let amount = if let Some(transfer_amount) = transfer_amount {
+            transfer_amount
+        } else {
 
+        };
         token::transfer(
             ctx.accounts
                 .into_transfer_context()
                 .with_signer(signer),
-            transfer_amount
+            amount
         )?;
         Ok(())
     }
@@ -47,7 +61,7 @@ pub mod unlucky {
             ctx.accounts
                 .into_transfer_to_user_context()
                 .with_signer(signer),
-            ctx.accounts.from_temp_token_account.amount
+            ctx.accounts.from_temp_token_account.amount.clone()
         )?;
         token::close_account(
             ctx.accounts
@@ -57,18 +71,10 @@ pub mod unlucky {
         Ok(())
     }
 }
-//
-// #[derive(Accounts)]
-// pub struct Initialize<'info> {
-//     #[account(mut)]
-//     pub initializer: Signer<'info>
-// }
 
 #[derive(Accounts)]
 #[instruction(wager_amount: u64)]
 pub struct AddUserToMatch<'info> {
-    // #[account(mut)]
-    // pub initializer: Signer<'info>,
     pub match_authority: AccountInfo<'info>,
     pub mint: Account<'info, Mint>,
     #[account(mut)]
@@ -91,12 +97,16 @@ pub struct AddUserToMatch<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(transfer_amount: u64)]
+#[instruction(transfer_amount: Option<u64>)]
 pub struct TransferToken<'info> {
     pub match_authority: AccountInfo<'info>,
     #[account(
         mut,
-        constraint = from_token_account.amount >= transfer_amount
+        constraint = if let Some(amount) = transfer_amount {
+            from_token_account.amount >= amount
+        } else {
+            true
+        }
     )]
     pub from_token_account: Account<'info, TokenAccount>,
     #[account(mut)]

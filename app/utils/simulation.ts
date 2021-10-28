@@ -17,7 +17,7 @@ const make_token_account = async (mintWrapper: CachedMint, userWallet: NodeWalle
 };
 
 export const make_mint = async (provider: Provider): Promise<CachedMint> => {
-    return await CachedMint.getOrCreateMint(provider, `${app_root}/data_cache/mint_idl.json`, c.remake_all_vals);
+    return await CachedMint.getOrCreateMint(provider, `${app_root}/data_cache/mint_idl.json`, false);
 };
 
 export const create_new_match = () => {
@@ -26,7 +26,7 @@ export const create_new_match = () => {
 
 
 export const new_user_wallet = (user_num: number) => {
-    const simulatedKeyPair = CachedKeypair.getOrCreateKp(`${app_root}/data_cache/simulated_key_pair_idl_${ user_num }.json`, c.remake_all_vals);
+    const simulatedKeyPair = CachedKeypair.getOrCreateKp(`${app_root}/data_cache/simulated_key_pair_idl_${ user_num }.json`, false);
     return new NodeWallet(simulatedKeyPair.kp);
 };
 
@@ -90,6 +90,7 @@ export class Simulation {
                 'recent'
             );
         }
+        console.log((await c.provider.connection.getBalance(simulated_user.user.publicKey)));
         this.user_num++;
         this.users.push(simulated_user);
         return simulated_user;

@@ -65,10 +65,10 @@
     "no-shadowed-variable": false,
     "no-string-literal": false,
     "no-switch-case-fall-through": true,
-    "no-unused-expression": [
-      true,
-      "allow-fast-null-checks"
-    ],
+//    "no-unused-expression": [
+//      true,
+//      "allow-fast-null-checks"
+//    ],
     "no-use-before-declare": true,
     "radix": true,
     "switch-default": true,

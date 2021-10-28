@@ -1,9 +1,9 @@
-import fs from "fs";
+import * as fs from "fs";
 import { get_provider_keypair, load_program_from_idl } from "./anchor_api_wrap/idl";
 import * as anchor from "@project-serum/anchor";
 import { NodeWallet } from "./utils/provider";
 import { anchor_util } from "./utils/anchor_stuff";
-import { Connection } from "@solana/web3.js";
+import { clusterApiUrl, Connection } from "@solana/web3.js";
 
 if (!fs.existsSync("./data_cache")) {
     fs.mkdirSync("./data_cache");
@@ -11,7 +11,7 @@ if (!fs.existsSync("./data_cache")) {
 
 process.env.ANCHOR_WALLET = get_provider_keypair();
 let provider = new anchor.Provider(
-    new Connection("http://127.0.0.1:8899", "processed"),
+    new Connection(clusterApiUrl("devnet"), "processed"),
     NodeWallet.local(),
     { commitment: "processed" }
 );

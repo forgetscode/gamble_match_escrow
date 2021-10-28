@@ -17,7 +17,7 @@ export type AddUserAccounts = {
 };
 export type AddUserArgs = {
     accounts: AddUserAccounts,
-    signers: Signers,
+    signers?: Signers,
     remaining_accounts?: RemainingAccounts
 };
 export type TransferTokenAccounts = {
@@ -31,6 +31,7 @@ export type TransferTokenAccounts = {
 };
 export type TransferTokenArgs = {
     accounts: TransferTokenAccounts,
+    signers?: Signers,
     remaining_accounts?: RemainingAccounts
 };
 export type LeaveAccounts = {
@@ -44,11 +45,12 @@ export type LeaveAccounts = {
 };
 export type LeaveArgs = {
     accounts: LeaveAccounts,
+    signers?: Signers,
     remaining_accounts?: RemainingAccounts
 };
 export interface RpcNamespace {
     addUser: (wagerAmount: BN, named_args: AddUserArgs) => Promise<string>;
-    transferToken: (transferAmount: BN, nonce: BN, named_args: TransferTokenArgs) => Promise<string>;
+    transferToken: (transferAmount: BN | null, nonce: BN, named_args: TransferTokenArgs) => Promise<string>;
     leave: (nonce: BN, named_args: LeaveArgs) => Promise<string>;
 }
 export declare class Program implements anchor.Program {

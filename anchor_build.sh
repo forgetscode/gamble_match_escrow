@@ -5,4 +5,5 @@ if anchor build; then
 else
     echo "Command failed"
 fi
+node make_config.js
 

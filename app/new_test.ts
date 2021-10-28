@@ -51,6 +51,7 @@ const user_requests_new_match = async (
     };
 
     await program.rpc.addUser(deposit_amount, add_user_accounts);
+    console.log("after user");
     await balance_monitor.update_balances("after addUser");
 
     const [ pda, nonce ] = await anchor.web3.PublicKey.findProgramAddress(
@@ -66,10 +67,10 @@ const user_requests_new_match = async (
             userAccount: user.user.publicKey,
             programSigner: pda,
             tokenProgram: TOKEN_PROGRAM_ID,
-            mint: simulation.mint.mint.publicKey,
+            mint: simulation.mint.mint.publicKey
         }
     };
-    await program.rpc.transferToken(new BN(250), new BN(nonce), transferArgs);
+    await program.rpc.transferToken(null, new BN(nonce), transferArgs);
     await balance_monitor.update_balances("after transferToken");
 
     const leaveArgs: LeaveArgs = {
@@ -89,8 +90,31 @@ const user_requests_new_match = async (
 };
 
 
+import { Keypair} from '@solana/web3.js';
+import * as bip39 from 'bip39';
+import * as bip32 from 'bip32';
+
 const do_stuff = async () => {
+    // const testKp = anchor.web3.Keypair.generate();
+    // const sKString = Buffer.from(testKp.secretKey).toString("base64url");
+    // console.log(sKString, sKString.length);
     const simulation = await Simulation.init_simulation();
+
+    const derivePath = "m/44'/501'/0'/0'";
+    const mnemonic = "lonely large ski panther praise test story battle install vehicle laundry carbon click toss remain cotton visa gate wrong outdoor harsh uphold confirm pumpkin";
+
+    const seed: Buffer = await bip39.mnemonicToSeed(mnemonic);
+// also tried to slice seed.slice(0, 32);
+    const derivedSeed = bip32.fromSeed(seed).derivePath(derivePath).privateKey;
+    if (derivedSeed) {
+        const keypair = Keypair.fromSeed(derivedSeed);
+        console.log(keypair.secretKey);
+        const publicKey = keypair.publicKey.toString();
+    }
+    // const resso = (await simulation.mint.mint.getAccountInfo(new PublicKey("HHbTDXkbjwu1ejEEbt5EdPuooGayCevE3FgXzDH69beC"))).amount.toNumber();
+    // const resso2 = (await c.provider.connection.getTokenAccountBalance(new PublicKey("HHbTDXkbjwu1ejEEbt5EdPuooGayCevE3FgXzDH69beC")));
+    // console.log(resso, resso2);
+    // await simulation.mint.make_token_account_for_user(new PublicKey("BLMdNP6ub4PAuUJkC8UJpoHeWyjx6TUe76MT4uJrqsBD"), 2000);
     // const owned_token_accs = await provider.connection.getTokenAccountsByOwner(new PublicKey("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH"), { mint: new PublicKey("2o4wvUNpwLq3k1uLF1Xibn5esYCg2wG5rXSu9WJLK7mA")})
     // console.log(owned_token_accs);
     // await simulation.mint.make_token_account_for_user("5XV5C37DwqzZ9Gz6EhajXoUSVzsV1EfJvec1ygM2BESH", 5000);
@@ -100,7 +124,7 @@ const do_stuff = async () => {
     // //     [simulation.mint.mintAuthority],
     // //     5000
     // // );
-    const user_requesting_match = await simulation.get_simulated_user(true);
+    const user_requesting_match = await simulation.get_simulated_user(false);
     await user_requests_new_match(
         simulation,
         user_requesting_match
